@@ -1,0 +1,51 @@
+[project]
+name = "logfire-demo"
+version = "0.1.0"
+description = "Demonstrate what Pydantic Logfire can do."
+authors = [
+    { name = "Samuel Colvin", email = "s@muelcolvin.com" }
+]
+dependencies = [
+    "fastapi>=0.110.0",
+    "logfire[fastapi,httpx]>=0.20.0",
+    "fastui>=0.5.2",
+    "httpx>=0.27.0",
+    "uvicorn[standard]>=0.28.0",
+    "watchfiles>=0.21.0",
+    "asyncpg>=0.29.0",
+    "opentelemetry-instrumentation-asyncpg>=0.44b0",
+    "pydantic-settings>=2.2.1",
+]
+readme = "README.md"
+requires-python = ">= 3.12"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
+[tool.rye]
+managed = true
+dev-dependencies = [
+    "ruff>=0.3.2",
+    "pyright>=1.1.354",
+    "asyncpg-stubs>=0.29.1",
+    "ipython>=8.22.2",
+    "devtools>=0.12.2",
+]
+
+[tool.rye.scripts]
+dev = "uvicorn src.web_ui:app --reload --no-access-log"
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+lint.extend-select = ["Q", "RUF100", "C90", "UP", "I"]
+lint.flake8-quotes = {inline-quotes = "single", multiline-quotes = "double"}
+lint.mccabe = { max-complexity = 14 }
+format.quote-style = "single"
