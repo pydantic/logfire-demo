@@ -39,7 +39,9 @@ async def list_cities(conn: Connection, offset: int) -> tuple[list[City], int]:
 
 
 async def filter_cities(conn: Connection, iso3: str, offset: int) -> tuple[list[City], int]:
-    rows = await conn.fetch('SELECT * FROM cities WHERE iso3=$1 ORDER BY population desc OFFSET $2 LIMIT 50', iso3, offset)
+    rows = await conn.fetch(
+        'SELECT * FROM cities WHERE iso3=$1 ORDER BY population desc OFFSET $2 LIMIT 50', iso3, offset
+    )
     cities = cities_adapter.validate_python(rows)
     total = await conn.fetchval('SELECT COUNT(*) FROM cities WHERE iso3=$1', iso3)
     return cities, total

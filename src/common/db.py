@@ -73,6 +73,8 @@ CREATE TABLE IF NOT EXISTS cities (
 CREATE INDEX IF NOT EXISTS cities_country_idx ON cities (country);
 CREATE INDEX IF NOT EXISTS cities_iso3_idx ON cities (iso3);
 CREATE INDEX IF NOT EXISTS cities_population_idx ON cities (population desc);
+
+-- CREATE TABLE IF NOT EXISTS users (
 """)
     from .cities import create_cities
 

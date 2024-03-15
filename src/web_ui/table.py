@@ -1,7 +1,5 @@
-from typing import Annotated
-
 import pydantic
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 from fastapi.exceptions import HTTPException
 from fastui import AnyComponent, FastUI
 from fastui import components as c
@@ -9,18 +7,19 @@ from fastui.components.display import DisplayLookup
 from fastui.events import BackEvent, GoToEvent
 from fastui.forms import SelectSearchResponse
 from pydantic import Field
-from httpx import AsyncClient
 
 
 from .shared import demo_page
 from ..common.db import Database
-from ..common import cities, get_http_client
+from ..common import cities, AsyncClientDep
 
 router = APIRouter()
 
 
 class FilterForm(pydantic.BaseModel):
-    country: str = Field(None, json_schema_extra={'search_url': '/api/table/search', 'placeholder': 'Filter by Country...'})
+    country: str = Field(
+        None, json_schema_extra={'search_url': '/api/table/search', 'placeholder': 'Filter by Country...'}
+    )
 
 
 @router.get('', response_model=FastUI, response_model_exclude_none=True)
@@ -57,7 +56,7 @@ async def cities_view(db: Database, page: int = 1, country: str | None = None) -
 
 
 @router.get('/search', response_model=SelectSearchResponse)
-async def search_view(http_client: Annotated[AsyncClient, Depends(get_http_client)], q: str) -> SelectSearchResponse:
+async def search_view(http_client: AsyncClientDep, q: str) -> SelectSearchResponse:
     options = await cities.search_name(http_client, q)
     return SelectSearchResponse(options=options)
 
@@ -73,4 +72,3 @@ async def city_view(db: Database, city_id: int) -> list[AnyComponent]:
         c.Details(data=city),
         title=city.city,
     )
-

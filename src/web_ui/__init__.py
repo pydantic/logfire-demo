@@ -18,10 +18,10 @@ from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
 from ..common.db import Database
 from .main import router as main_router
 from .table import router as table_router
+from .llm import router as llm_router
 
 logfire.configure()
 AsyncPGInstrumentor().instrument()
-HTTPXClientInstrumentor().instrument()
 
 
 class Settings(BaseSettings):
@@ -32,9 +32,11 @@ class Settings(BaseSettings):
 async def lifespan(app_: FastAPI):
     settings: Settings = app_.state.settings  # type: ignore
     async with AsyncExitStack() as stack:
-        app_.state.httpx_client = await stack.enter_async_context(AsyncClient())
+        app_.state.httpx_client = httpx_client = await stack.enter_async_context(AsyncClient())
+        HTTPXClientInstrumentor.instrument_client(httpx_client)
         app_.state.db = await stack.enter_async_context(Database.create(settings.pg_dsn, True))
         yield
+
 
 # This doesn't have any effect yet, needs https://github.com/pydantic/FastUI/issues/198
 frontend_reload = '--reload' in sys.argv
@@ -49,6 +51,7 @@ logfire.instrument_fastapi(app)
 
 fastapi_auth_exception_handling(app)
 app.include_router(table_router, prefix='/api/table')
+app.include_router(llm_router, prefix='/api/llm')
 app.include_router(main_router, prefix='/api')
 
 

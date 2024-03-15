@@ -3,7 +3,7 @@ from __future__ import annotations as _annotations
 from fastapi import APIRouter
 from fastui import AnyComponent, FastUI
 from fastui import components as c
-from fastui.events import GoToEvent
+from fastui.events import GoToEvent, PageEvent
 
 from .shared import demo_page
 
@@ -24,7 +24,15 @@ You can use the sections below to see how different tasks are recorded by Logfir
             components=[
                 c.Heading(text='Table and DB queries', level=2),
                 c.Paragraph(text='View a table where data is fetched from the database.'),
-                c.Button(text='View Table', on_click=GoToEvent(url='/table'), class_name='+ ms-2'),
+                c.Button(text='View Table', on_click=GoToEvent(url='/table')),
+            ],
+            class_name='border-top mt-3 pt-1',
+        ),
+        c.Div(
+            components=[
+                c.Heading(text='LLM Query', level=2),
+                c.Paragraph(text='Simple LLM question and answer.'),
+                c.Button(text='Try LLM Prompt', on_click=GoToEvent(url='/llm')),
             ],
             class_name='border-top mt-3 pt-1',
         ),
