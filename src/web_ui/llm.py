@@ -55,12 +55,11 @@ async def _llm_stream_gen(http_client: AsyncClientDep, prompt: str) -> AsyncIter
     ]
     model = 'gpt-4'
     with logfire.span('openai {model=} {messages=}', model=model, messages=messages) as logfire_span:
-        with logfire.span('openai.create'):
-            chunks = await AsyncOpenAI(http_client=http_client).chat.completions.create(
-                model=model,
-                messages=messages,
-                stream=True,
-            )
+        chunks = await AsyncOpenAI(http_client=http_client).chat.completions.create(
+            model=model,
+            messages=messages,
+            stream=True,
+        )
 
         output = ''
         chunk_count = 0
