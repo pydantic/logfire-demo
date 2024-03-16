@@ -109,6 +109,8 @@ opentelemetry-util-http==0.44b0
     # via opentelemetry-instrumentation-asgi
     # via opentelemetry-instrumentation-fastapi
     # via opentelemetry-instrumentation-httpx
+pillow==10.2.0
+    # via logfire-demo
 protobuf==4.25.3
     # via googleapis-common-protos
     # via logfire

@@ -6,7 +6,8 @@ services:
     ports:
       - 8000:8000
     environment:
-        pg_dsn: postgres://postgres:postgres@postgres/logfire_demo
+        SERVICE: webui
+        PG_DSN: postgres://postgres:postgres@postgres/logfire_demo
         REDIS_DSN: redis://redis:6379/0
         # forward the openapi key from the host environment
         OPENAI_API_KEY: $OPENAI_API_KEY
@@ -15,6 +16,17 @@ services:
     depends_on:
       - postgres
       - redis
+
+  tiling:
+    build: .
+    container_name: logfire-demo-tiling
+    tty: true
+    ports:
+      - 8001:8000
+    environment:
+        SERVICE: tiling
+    healthcheck:
+      test: python -c "import urllib.request as r; assert r.urlopen('http://localhost:8000/health').status == 200"
 
   postgres:
     image: postgres:latest

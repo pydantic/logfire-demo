@@ -16,4 +16,3 @@ ARG LOGFIRE_TOKEN
 ENV LOGFIRE_TOKEN=$LOGFIRE_TOKEN
 
 ENTRYPOINT ["python", "-m", "src"]
-CMD ["webui"]

@@ -4,18 +4,27 @@ services:
     runtime: docker
     rootDir: .
     dockerfilePath: ./Dockerfile
-    dockerContext: .
     envVars:
       - key: LOGFIRE_TOKEN
         sync: false
       - key: OPENAI_API_KEY
         sync: false
-      - key: create_database
+      - key: CREATE_DATABASE
         value: "false"
-      - key: pg_dsn
+      - key: PG_DSN
         fromDatabase:
           name: postgres
           property: connectionString
+  - type: web
+    name: tiling
+    runtime: docker
+    rootDir: .
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: LOGFIRE_TOKEN
+        sync: false
+      - key: TILING_SERVER
+        value: "https://tiling.onrender.com"
 
 databases:
   - name: postgres

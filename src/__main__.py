@@ -1,9 +1,13 @@
-import sys
+import os
 
-task = sys.argv[1]
-if task == 'webui':
+service = os.getenv('SERVICE')
+if service == 'webui':
     from .webui import run
 
     run()
+elif service == 'tiling':
+    from .tiling import run
+
+    run()
 else:
-    raise RuntimeError(f'Unknown task: {task}')
+    raise RuntimeError(f'Unknown service: {service}')
