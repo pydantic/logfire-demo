@@ -46,10 +46,11 @@ async def llm_page(db: Database) -> list[AnyComponent]:
 
 
 @router.post('/ask', response_model=FastUI, response_model_exclude_none=True)
-async def llm_ask(db: Database, prompt: Annotated[PromptModel, fastui_form(PromptModel)], chat_id: UUID) -> list[AnyComponent]:
+async def llm_ask(
+    db: Database, prompt: Annotated[PromptModel, fastui_form(PromptModel)], chat_id: UUID
+) -> list[AnyComponent]:
     async with db.acquire() as conn:
         # create a new message row
-        # TODO check total daily cost
         await conn.execute(
             """
             insert into messages (chat_id, role, message) VALUES ($1, 'user', $2)
@@ -64,9 +65,24 @@ async def llm_ask(db: Database, prompt: Annotated[PromptModel, fastui_form(Promp
     ]
 
 
+OPENAI_MODEL = 'gpt-4'
+
+
 @router.get('/ask/stream', response_model=FastUI, response_model_exclude_none=True)
 async def llm_stream(db: Database, http_client: AsyncClientDep, chat_id: UUID) -> StreamingResponse:
+
     async with db.acquire() as conn:
+        # count tokens used today
+        tokens_used = await conn.fetchval(
+            'select sum(cost) from messages where created_at > current_date and cost is not null'
+        )
+        logfire.info('{cost_today=}', cost_today=tokens_used)
+
+        # 1m tokens is $10 if I've done my math right
+        if tokens_used is not None and tokens_used > 1_000_000:
+            content = [_sse_message(f'**Limit Exceeded**:\n\nDaily token limit exceeded.')]
+            return StreamingResponse(content, media_type='text/event-stream')
+
         # get messages from this chat
         chat_messages = await conn.fetch(
             'select role, message as content from messages where chat_id = $1 order by created_at',
@@ -74,14 +90,14 @@ async def llm_stream(db: Database, http_client: AsyncClientDep, chat_id: UUID) -
         )
 
     async def gen() -> AsyncIterable[str]:
-        messages = [{'role': 'system', 'content': 'please response in markdown only.'}, *map(dict, chat_messages)]
-        model = 'gpt-4'
+        messages = [{'role': 'system', 'content': 'Please response in markdown only.'}, *map(dict, chat_messages)]
         output = ''
-        usage = None
+        input_usage = sum(_count_usage(m['content']) for m in messages if m['role'] in ('system', 'user'))
+        output_usage = 0
         try:
-            with logfire.span('openai {model=} {messages=}', model=model, messages=messages) as logfire_span:
+            with logfire.span('openai {model=} {messages=}', model=OPENAI_MODEL, messages=messages) as logfire_span:
                 chunks = await AsyncOpenAI(http_client=http_client).chat.completions.create(
-                    model=model,
+                    model=OPENAI_MODEL,
                     messages=messages,
                     stream=True,
                 )
@@ -92,12 +108,12 @@ async def llm_stream(db: Database, http_client: AsyncClientDep, chat_id: UUID) -
                     chunk_count += 1
                     if text is not None:
                         output += text
-                        m = FastUI(root=[c.Markdown(text=f'**{model.upper()}**:\n\n{output}')])
-                        yield f'data: {m.model_dump_json(by_alias=True, exclude_none=True)}\n\n'
+                        yield _sse_message(f'**{OPENAI_MODEL.upper()}**:\n\n{output}')
                 logfire_span.set_attribute('chunk_count', chunk_count)
                 logfire_span.set_attribute('output', output)
-                usage = len(tiktoken.encoding_for_model(model).encode(output))
-                logfire_span.set_attribute('usage', usage)
+                logfire_span.set_attribute('input_usage', input_usage)
+                output_usage = _count_usage(output)
+                logfire_span.set_attribute('output_usage', output_usage)
         finally:
             async with db.acquire() as conn:
                 await conn.execute(
@@ -106,7 +122,19 @@ async def llm_stream(db: Database, http_client: AsyncClientDep, chat_id: UUID) -
                     """,
                     chat_id,
                     output,
-                    usage,
+                    input_usage + output_usage,
                 )
 
     return StreamingResponse(gen(), media_type='text/event-stream')
+
+
+TOKEN_ENCODER = tiktoken.encoding_for_model(OPENAI_MODEL)
+
+
+def _count_usage(message: str) -> int:
+    return len(TOKEN_ENCODER.encode(message))
+
+
+def _sse_message(markdown: str) -> str:
+    m = FastUI(root=[c.Markdown(text=markdown)])
+    return f'data: {m.model_dump_json(by_alias=True, exclude_none=True)}\n\n'

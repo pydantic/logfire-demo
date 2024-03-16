@@ -58,7 +58,7 @@ Database = Annotated[_Database, Depends(_get_db)]
 async def _prepare_db(dsn: str) -> None:
     parse_result = urlparse(dsn)
     database = parse_result.path.lstrip('/')
-    server_dsn = dsn[:dsn.rindex('/')]
+    server_dsn = dsn[: dsn.rindex('/')]
     with logfire.span('check and create DB'):
         conn = await asyncpg.connect(server_dsn)
         try:
