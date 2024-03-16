@@ -70,7 +70,6 @@ OPENAI_MODEL = 'gpt-4'
 
 @router.get('/ask/stream', response_model=FastUI, response_model_exclude_none=True)
 async def llm_stream(db: Database, http_client: AsyncClientDep, chat_id: UUID) -> StreamingResponse:
-
     async with db.acquire() as conn:
         # count tokens used today
         tokens_used = await conn.fetchval(

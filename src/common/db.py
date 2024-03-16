@@ -23,10 +23,10 @@ class _Database:
 
     @classmethod
     @asynccontextmanager
-    async def create(cls, dsn: str, prepare_db: bool = False) -> AsyncIterator[Self]:
+    async def create(cls, dsn: str, prepare_db: bool = False, create_database: bool = False) -> AsyncIterator[Self]:
         if prepare_db:
             with logfire.span('prepare DB'):
-                await _prepare_db(dsn)
+                await _prepare_db(dsn, create_database)
         pool = await asyncpg.create_pool(dsn)
         try:
             yield cls(_pool=pool)
@@ -55,18 +55,19 @@ def _get_db(request: Request) -> _Database:
 Database = Annotated[_Database, Depends(_get_db)]
 
 
-async def _prepare_db(dsn: str) -> None:
-    parse_result = urlparse(dsn)
-    database = parse_result.path.lstrip('/')
-    server_dsn = dsn[: dsn.rindex('/')]
-    with logfire.span('check and create DB'):
-        conn = await asyncpg.connect(server_dsn)
-        try:
-            db_exists = await conn.fetchval('SELECT 1 FROM pg_database WHERE datname = $1', database)
-            if not db_exists:
-                await conn.execute(f'CREATE DATABASE {database}')
-        finally:
-            await conn.close()
+async def _prepare_db(dsn: str, create_database: bool) -> None:
+    if create_database:
+        with logfire.span('check and create DB'):
+            parse_result = urlparse(dsn)
+            database = parse_result.path.lstrip('/')
+            server_dsn = dsn[: dsn.rindex('/')]
+            conn = await asyncpg.connect(server_dsn)
+            try:
+                db_exists = await conn.fetchval('SELECT 1 FROM pg_database WHERE datname = $1', database)
+                if not db_exists:
+                    await conn.execute(f'CREATE DATABASE {database}')
+            finally:
+                await conn.close()
 
     with logfire.span('create schema'):
         conn = await asyncpg.connect(dsn)

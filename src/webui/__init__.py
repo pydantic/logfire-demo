@@ -33,6 +33,7 @@ AsyncPGInstrumentor().instrument()
 
 class Settings(BaseSettings):
     pg_dsn: str = 'postgres://postgres:postgres@localhost/logfire_demo'
+    create_database: bool = True
 
 
 @asynccontextmanager
@@ -41,7 +42,9 @@ async def lifespan(app_: FastAPI):
     async with AsyncExitStack() as stack:
         app_.state.httpx_client = httpx_client = await stack.enter_async_context(AsyncClient())
         HTTPXClientInstrumentor.instrument_client(httpx_client)
-        app_.state.db = await stack.enter_async_context(Database.create(settings.pg_dsn, True))
+        app_.state.db = await stack.enter_async_context(
+            Database.create(settings.pg_dsn, True, settings.create_database)
+        )
         yield
 
 

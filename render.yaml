@@ -10,6 +10,8 @@ services:
         sync: false
       - key: OPENAI_API_KEY
         sync: false
+      - key: create_database
+        value: "false"
       - key: pg_dsn
         fromDatabase:
           name: postgres
