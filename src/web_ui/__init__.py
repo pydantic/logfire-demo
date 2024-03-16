@@ -25,7 +25,7 @@ AsyncPGInstrumentor().instrument()
 
 
 class Settings(BaseSettings):
-    pg_dsn: str = 'postgres://postgres:postgres@localhost/postgres'
+    pg_dsn: str = 'postgres://postgres:postgres@localhost/logfire_demo'
 
 
 @asynccontextmanager
