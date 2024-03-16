@@ -1,0 +1,11 @@
+.git
+dist
+.venv
+.logfire
+.github
+
+**/node_modules/
+**/__pycache__/
+scratch
+
+**/target/

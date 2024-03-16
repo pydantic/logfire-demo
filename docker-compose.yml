@@ -1,0 +1,50 @@
+services:
+  webui:
+    build: .
+    container_name: logfire-demo-webui
+    tty: true
+    ports:
+      - 8000:8000
+    environment:
+        pg_dsn: postgres://postgres:postgres@postgres/logfire_demo
+        REDIS_DSN: redis://redis:6379/0
+        # forward the openapi key from the host environment
+        OPENAI_API_KEY: $OPENAI_API_KEY
+    healthcheck:
+      test: python -c "import urllib.request as r; assert r.urlopen('http://localhost:8000/health').status == 200"
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    image: postgres:latest
+    container_name: logfire-demo-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      # to connect: `pgcli postgre://postgres:postgres@localhost:54320/logfire_demo`
+      - 54320:5432
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+
+  redis:
+    image: redis:latest
+    container_name: logfire-demo-redis
+    volumes:
+      - redis-data:/data
+    ports:
+      - "63790:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+
+volumes:
+  postgres-data:
+  redis-data:
+
+networks:
+  default:
+    name: dev

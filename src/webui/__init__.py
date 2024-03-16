@@ -1,5 +1,6 @@
 from __future__ import annotations as _annotations
 
+import os
 import sys
 from contextlib import asynccontextmanager, AsyncExitStack
 
@@ -20,7 +21,13 @@ from .main import router as main_router
 from .table import router as table_router
 from .llm import router as llm_router
 
-logfire.configure()
+print(os.environ, flush=True)
+print(os.environ.get('LOGFIRE_TOKEN'), flush=True)
+os.environ.update(
+    OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_REQUEST='.*',
+    OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_RESPONSE='.*',
+)
+logfire.configure(send_to_logfire=bool(os.getenv('LOGFIRE_TOKEN')), service_name='webui')
 AsyncPGInstrumentor().instrument()
 
 
@@ -60,6 +67,13 @@ async def robots_txt() -> str:
     return 'User-agent: *\nDisallow: /'
 
 
+@app.get('/health', response_class=PlainTextResponse)
+async def health(db: Database) -> str:
+    async with db.acquire() as con:
+        version = await con.fetchval('SELECT version()')
+    return f'pg version: {version}'
+
+
 @app.get('/favicon.ico', status_code=404, response_class=PlainTextResponse)
 async def favicon_ico() -> str:
     return 'page not found'
@@ -68,3 +82,9 @@ async def favicon_ico() -> str:
 @app.get('/{path:path}')
 async def html_landing() -> HTMLResponse:
     return HTMLResponse(prebuilt_html(title='Logfire Demo'))
+
+
+def run():
+    import uvicorn
+
+    uvicorn.run(app, host='0.0.0.0', port=8000, log_level='info')

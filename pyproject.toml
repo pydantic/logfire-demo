@@ -43,7 +43,7 @@ dev-dependencies = [
 ]
 
 [tool.rye.scripts]
-dev = "uvicorn src.web_ui:app --reload"
+dev = "uvicorn src.webui:app --reload"
 
 [tool.ruff]
 line-length = 120

@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: webui
+    runtime: docker
+    rootDir: .
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    envVars:
+      - key: LOGFIRE_TOKEN
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: pg_dsn
+        fromDatabase:
+          name: postgres
+          property: connectionString
+
+databases:
+  - name: postgres
+    plan: starter
