@@ -78,7 +78,7 @@ class BuildMap:
             times=self.times,
         )
 
-        return await asyncio.get_event_loop().run_in_executor(None, self.build_image)
+        return await asyncio.get_event_loop().run_in_executor(None, self.stitch_tiles)
 
     @staticmethod
     def range_correction(tile_no: float, size: int) -> tuple[Sequence[int], int]:
@@ -113,7 +113,8 @@ class BuildMap:
         else:
             self.tiles.add((r.content, image_x, image_y))
 
-    def build_image(self) -> bytes:
+    @logfire.instrument('stitch tiles together')
+    def stitch_tiles(self) -> bytes:
         # the minimum image width is set to 95px to fit copyright text
         box_size_w, box_size_h = 95, 8
         text_pos_x, text_pos_y = 94, 8

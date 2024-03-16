@@ -34,6 +34,12 @@ app = FastAPI(lifespan=lifespan)
 logfire.instrument_fastapi(app)
 
 
+@app.get('/', response_class=PlainTextResponse)
+@app.head('/', include_in_schema=False)
+async def index() -> str:
+    return 'Tiling service\n'
+
+
 @app.get('/robots.txt', response_class=PlainTextResponse)
 @app.head('/robots.txt', include_in_schema=False)
 async def robots_txt() -> str:
@@ -43,7 +49,7 @@ async def robots_txt() -> str:
 @app.get('/health', response_class=PlainTextResponse)
 @app.head('/health', include_in_schema=False)
 async def health() -> str:
-    return 'OK'
+    return 'OK\n'
 
 
 @app.get('/favicon.ico', status_code=404, response_class=PlainTextResponse)

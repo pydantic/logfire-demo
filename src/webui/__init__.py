@@ -68,11 +68,13 @@ app.include_router(main_router, prefix='/api')
 
 
 @app.get('/robots.txt', response_class=PlainTextResponse)
+@app.head('/robots.txt', include_in_schema=False)
 async def robots_txt() -> str:
     return 'User-agent: *\nDisallow: /'
 
 
 @app.get('/health', response_class=PlainTextResponse)
+@app.head('/health', include_in_schema=False)
 async def health(db: Database) -> str:
     async with db.acquire() as con:
         version = await con.fetchval('SELECT version()')
@@ -92,6 +94,7 @@ async def map_jpg(http_client: AsyncClientDep) -> StreamingResponse:
 
 
 @app.get('/{path:path}')
+@app.head('/{path:path}', include_in_schema=False)
 async def html_landing() -> HTMLResponse:
     return HTMLResponse(prebuilt_html(title='Logfire Demo'))
 
