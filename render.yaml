@@ -5,6 +5,8 @@ services:
     rootDir: .
     dockerfilePath: ./Dockerfile
     envVars:
+      - key: SERVICE
+        value: webui
       - key: LOGFIRE_TOKEN
         sync: false
       - key: OPENAI_API_KEY
@@ -21,6 +23,8 @@ services:
     rootDir: .
     dockerfilePath: ./Dockerfile
     envVars:
+      - key: SERVICE
+        value: tiling
       - key: LOGFIRE_TOKEN
         sync: false
       - key: TILING_SERVER
