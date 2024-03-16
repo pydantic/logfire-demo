@@ -9,6 +9,8 @@ services:
         value: webui
       - key: LOGFIRE_TOKEN
         sync: false
+      - key: TILING_SERVER
+        value: "https://tiling.onrender.com"
       - key: OPENAI_API_KEY
         sync: false
       - key: CREATE_DATABASE
@@ -26,11 +28,7 @@ services:
       - key: SERVICE
         value: tiling
       - key: LOGFIRE_TOKEN
-        fromService:
-          name: webui
-          property: LOGFIRE_TOKEN
-      - key: TILING_SERVER
-        value: "https://tiling.onrender.com"
+        sync: false
 
 databases:
   - name: postgres
