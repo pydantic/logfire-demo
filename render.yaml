@@ -57,7 +57,7 @@ services:
           property: connectionString
   - type: redis
     name: arq-redis
-    plan: free
+    plan: starter
     ipAllowList: [] # only allow internal connections
 
 databases:
