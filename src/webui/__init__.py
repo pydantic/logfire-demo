@@ -6,7 +6,6 @@ from contextlib import asynccontextmanager, AsyncExitStack
 
 import logfire
 
-from pydantic_settings import BaseSettings
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, PlainTextResponse
 from fastui import prebuilt_html

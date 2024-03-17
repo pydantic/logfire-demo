@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging.config
 
 import asyncpg
 import logfire
@@ -10,10 +11,34 @@ from ..common import GeneralSettings
 from .cloc import cloc_logic
 
 from arq.connections import RedisSettings
+from arq.logs import default_log_config
 from arq.worker import run_worker
+from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
 
 
 logfire.configure(service_name='worker')
+
+
+class Settings(GeneralSettings):
+    github_token: str
+
+
+settings = Settings()  # type: ignore
+
+
+async def startup(ctx):
+    headers = {'Accept': 'application/vnd.github.v3+json', 'Authorization': f'token {settings.github_token}'}
+    client = AsyncClient(headers=headers)
+    HTTPXClientInstrumentor.instrument_client(client)
+    ctx.update(
+        client=client,
+        pg_pool=await asyncpg.create_pool(settings.pg_dsn),
+    )
+
+
+async def shutdown(ctx):
+    await ctx['client'].aclose()
+    await asyncio.wait_for(ctx['pg_pool'].close(), timeout=2.0)
 
 
 async def cloc(ctx, repo: str):
@@ -38,26 +63,6 @@ async def cloc(ctx, repo: str):
         raise
 
 
-class Settings(GeneralSettings):
-    github_token: str
-
-
-settings = Settings()  # type: ignore
-
-
-async def startup(ctx):
-    headers = {'Accept': 'application/vnd.github.v3+json', 'Authorization': f'token {settings.github_token}'}
-    ctx.update(
-        client=AsyncClient(headers=headers),
-        pg_pool=await asyncpg.create_pool(settings.pg_dsn),
-    )
-
-
-async def shutdown(ctx):
-    await ctx['client'].aclose()
-    await asyncio.wait_for(ctx['pg_pool'].close(), timeout=2.0)
-
-
 class WorkerSettings:
     functions = [cloc]
     on_startup = startup
@@ -65,5 +70,14 @@ class WorkerSettings:
     redis_settings = RedisSettings.from_dsn(settings.redis_dsn)
 
 
-async def run():
+def run():
+    logging.config.dictConfig({
+        'version': 1,
+        'disable_existing_loggers': False,
+        'handlers': {
+            'logfire': {'level': 'INFO', 'class': 'logfire.integrations.logging.LogfireLoggingHandler'},
+        },
+        'loggers': {'arq': {'handlers': ['logfire'], 'level': 'INFO'}},
+    })
+
     run_worker(WorkerSettings)  # type: ignore
