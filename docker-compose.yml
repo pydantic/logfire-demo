@@ -2,15 +2,16 @@ services:
   webui:
     build: .
     container_name: logfire-demo-webui
-    tty: true
     ports:
       - 8000:8000
     environment:
         SERVICE: webui
         PG_DSN: postgres://postgres:postgres@postgres/logfire_demo
         REDIS_DSN: redis://redis:6379/0
+        TILING_SERVER: "http://tiling:8000"
         # forward the openapi key from the host environment
         OPENAI_API_KEY: $OPENAI_API_KEY
+        LOGFIRE_TOKEN: $LOGFIRE_TOKEN
     healthcheck:
       test: python -c "import urllib.request as r; assert r.urlopen('http://localhost:8000/health').status == 200"
     depends_on:
@@ -20,13 +21,23 @@ services:
   tiling:
     build: .
     container_name: logfire-demo-tiling
-    tty: true
-    ports:
-      - 8001:8000
     environment:
         SERVICE: tiling
+        LOGFIRE_TOKEN: $LOGFIRE_TOKEN
     healthcheck:
       test: python -c "import urllib.request as r; assert r.urlopen('http://localhost:8000/health').status == 200"
+
+  worker:
+    build: .
+    container_name: logfire-demo-worker
+    environment:
+        SERVICE: worker
+        PG_DSN: postgres://postgres:postgres@postgres/logfire_demo
+        REDIS_DSN: redis://redis:6379/0
+        GITHUB_TOKEN: $GITHUB_TOKEN
+        LOGFIRE_TOKEN: $LOGFIRE_TOKEN
+    healthcheck:
+      test: arq src.worker.WorkerSettings --check
 
   postgres:
     image: postgres:latest

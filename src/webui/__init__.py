@@ -6,7 +6,6 @@ from contextlib import asynccontextmanager, AsyncExitStack
 
 import logfire
 
-from pydantic_settings import BaseSettings
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, PlainTextResponse
 from fastui import prebuilt_html
@@ -16,12 +15,15 @@ from httpx import AsyncClient
 from starlette.responses import StreamingResponse
 from opentelemetry.instrumentation.asyncpg import AsyncPGInstrumentor
 from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
+import arq
+from arq.connections import RedisSettings
 
-from ..common import AsyncClientDep
+from ..common import AsyncClientDep, GeneralSettings
 from ..common.db import Database
 from .main import router as main_router
 from .table import router as table_router
 from .llm import router as llm_router
+from .worker import router as worker_router
 
 os.environ.update(
     OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_REQUEST='.*',
@@ -31,8 +33,7 @@ logfire.configure(service_name='webui')
 AsyncPGInstrumentor().instrument()
 
 
-class Settings(BaseSettings):
-    pg_dsn: str = 'postgres://postgres:postgres@localhost/logfire_demo'
+class Settings(GeneralSettings):
     create_database: bool = True
     tiling_server: str = 'http://localhost:8001'
 
@@ -48,6 +49,7 @@ async def lifespan(app_: FastAPI):
         app_.state.db = await stack.enter_async_context(
             Database.create(settings.pg_dsn, True, settings.create_database)
         )
+        app_.state.arq_redis = await arq.create_pool(RedisSettings.from_dsn(settings.redis_dsn))
         yield
 
 
@@ -64,13 +66,14 @@ logfire.instrument_fastapi(app)
 fastapi_auth_exception_handling(app)
 app.include_router(table_router, prefix='/api/table')
 app.include_router(llm_router, prefix='/api/llm')
+app.include_router(worker_router, prefix='/api/worker')
 app.include_router(main_router, prefix='/api')
 
 
 @app.get('/robots.txt', response_class=PlainTextResponse)
 @app.head('/robots.txt', include_in_schema=False)
 async def robots_txt() -> str:
-    return 'User-agent: *\nDisallow: /'
+    return 'User-agent: *\nDisallow: /\n'
 
 
 @app.get('/health', response_class=PlainTextResponse)

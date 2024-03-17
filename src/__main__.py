@@ -1,13 +1,17 @@
 import os
 
 service = os.getenv('SERVICE')
-if service == 'webui':
-    from .webui import run
+match service:
+    case 'webui':
+        from . import webui
 
-    run()
-elif service == 'tiling':
-    from .tiling import run
+        webui.run()
+    case 'tiling':
+        from . import tiling
+        tiling.run()
+    case 'worker':
+        from . import worker
 
-    run()
-else:
-    raise RuntimeError(f'Unknown service: {service}')
+        worker.run()
+    case _:
+        raise RuntimeError(f'Unknown service: {service}')

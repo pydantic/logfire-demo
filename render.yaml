@@ -19,6 +19,11 @@ services:
         fromDatabase:
           name: postgres
           property: connectionString
+      - key: REDIS_DSN
+        fromService:
+          type: redis
+          name: arq-redis
+          property: connectionString
   - type: web
     name: tiling
     runtime: docker
@@ -29,6 +34,31 @@ services:
         value: tiling
       - key: LOGFIRE_TOKEN
         sync: false
+  - type: worker
+    name: arq-worker
+    runtime: docker
+    rootDir: .
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: SERVICE
+        value: worker
+      - key: LOGFIRE_TOKEN
+        sync: false
+      - key: GITHUB_TOKEN
+        sync: false
+      - key: PG_DSN
+        fromDatabase:
+          name: postgres
+          property: connectionString
+      - key: REDIS_DSN
+        fromService:
+          type: redis
+          name: arq-redis
+          property: connectionString
+  - type: redis
+    name: arq-redis
+    plan: free
+    ipAllowList: [] # only allow internal connections
 
 databases:
   - name: postgres

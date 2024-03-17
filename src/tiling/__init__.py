@@ -43,7 +43,7 @@ async def index() -> str:
 @app.get('/robots.txt', response_class=PlainTextResponse)
 @app.head('/robots.txt', include_in_schema=False)
 async def robots_txt() -> str:
-    return 'User-agent: *\nDisallow: /'
+    return 'User-agent: *\nDisallow: /\n'
 
 
 @app.get('/health', response_class=PlainTextResponse)

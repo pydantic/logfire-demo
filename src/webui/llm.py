@@ -3,7 +3,7 @@ from uuid import UUID
 
 import logfire
 from fastapi import APIRouter
-from fastui import AnyComponent, FastUI
+from fastui import AnyComponent, FastUI, events
 from fastui.forms import fastui_form
 from fastui import components as c
 from starlette.responses import StreamingResponse
@@ -26,7 +26,7 @@ def form_comp(chat_id: UUID) -> c.ModelForm:
     return c.ModelForm(
         model=PromptModel,
         method='POST',
-        submit_url=f'/api/llm/ask?{build_params(chat_id=chat_id)}',
+        submit_url=f'/api/llm/ask/{chat_id}',
         footer=[c.Div(components=[c.Button(text='Ask')], class_name='text-end')],
     )
 
@@ -36,15 +36,18 @@ async def llm_page(db: Database) -> list[AnyComponent]:
     async with db.acquire() as conn:
         # create a new chat row
         chat_id = await conn.fetchval('insert into chats DEFAULT VALUES RETURNING id')
+
     return demo_page(
+        c.Link(components=[c.Text(text='back')], on_click=events.BackEvent()),
         c.Div(
             components=[c.Div(components=[form_comp(chat_id)], class_name='col-md-6')],
             class_name='row justify-content-center',
         ),
+        title='LLM Query',
     )
 
 
-@router.post('/ask', response_model=FastUI, response_model_exclude_none=True)
+@router.post('/ask/{chat_id}', response_model=FastUI, response_model_exclude_none=True)
 async def llm_ask(
     db: Database, prompt: Annotated[PromptModel, fastui_form(PromptModel)], chat_id: UUID
 ) -> list[AnyComponent]:
@@ -59,7 +62,7 @@ async def llm_ask(
         )
     return [
         c.Markdown(text=f'**You asked:** {prompt.prompt}'),
-        c.ServerLoad(path=f'/llm/ask/stream?{build_params(chat_id=chat_id)}', sse=True),
+        c.ServerLoad(path=f'/llm/ask/stream/{chat_id}', sse=True),
         form_comp(chat_id),
     ]
 
@@ -67,7 +70,7 @@ async def llm_ask(
 OPENAI_MODEL = 'gpt-4'
 
 
-@router.get('/ask/stream', response_model=FastUI, response_model_exclude_none=True)
+@router.get('/ask/stream/{chat_id}')
 async def llm_stream(db: Database, http_client: AsyncClientDep, chat_id: UUID) -> StreamingResponse:
     async with db.acquire() as conn:
         # count tokens used today

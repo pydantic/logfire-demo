@@ -1,12 +1,10 @@
-import pydantic
 from fastapi import APIRouter
 from fastapi.exceptions import HTTPException
-from fastui import AnyComponent, FastUI
+from fastui import AnyComponent, FastUI, events
 from fastui import components as c
 from fastui.components.display import DisplayLookup
-from fastui.events import BackEvent, GoToEvent
 from fastui.forms import SelectSearchResponse
-from pydantic import Field
+from pydantic import Field, BaseModel
 
 
 from .shared import demo_page
@@ -16,7 +14,7 @@ from ..common import cities, AsyncClientDep
 router = APIRouter()
 
 
-class FilterForm(pydantic.BaseModel):
+class FilterForm(BaseModel):
     country: str = Field(
         None, json_schema_extra={'search_url': '/api/table/search', 'placeholder': 'Filter by Country...'}
     )
@@ -33,6 +31,7 @@ async def cities_view(db: Database, page: int = 1, country: str | None = None) -
             table_cities, count = await cities.list_cities(conn, (page - 1) * cities.PAGE_LIMIT)
             filter_form_initial = {}
     return demo_page(
+        c.Link(components=[c.Text(text='back')], on_click=events.BackEvent()),
         c.ModelForm(
             model=FilterForm,
             submit_url='.',
@@ -45,7 +44,7 @@ async def cities_view(db: Database, page: int = 1, country: str | None = None) -
             data=table_cities,
             data_model=cities.City,
             columns=[
-                DisplayLookup(field='city', on_click=GoToEvent(url='./{id}'), table_width_percent=33),
+                DisplayLookup(field='city', on_click=events.GoToEvent(url='./{id}'), table_width_percent=33),
                 DisplayLookup(field='country', table_width_percent=33),
                 DisplayLookup(field='population', table_width_percent=33),
             ],
@@ -68,7 +67,7 @@ async def city_view(db: Database, city_id: int) -> list[AnyComponent]:
     if not city:
         raise HTTPException(status_code=404, detail='City not found')
     return demo_page(
-        c.Link(components=[c.Text(text='Back')], on_click=BackEvent()),
+        c.Link(components=[c.Text(text='Back')], on_click=events.BackEvent()),
         c.Details(data=city),
         title=city.city,
     )

@@ -19,6 +19,7 @@ dependencies = [
     "openai>=1.14.1",
     "tiktoken>=0.6.0",
     "pillow>=10.2.0",
+    "arq>=0.25.0",
 ]
 readme = "README.md"
 requires-python = ">= 3.12"
@@ -46,6 +47,7 @@ dev-dependencies = [
 [tool.rye.scripts]
 dev = "uvicorn src.webui:app --reload"
 tiling = "uvicorn src.tiling:app --reload --port 8001"
+worker = "arq src.worker.WorkerSettings"
 
 [tool.ruff]
 line-length = 120

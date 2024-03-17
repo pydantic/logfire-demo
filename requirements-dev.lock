@@ -15,6 +15,8 @@ anyio==4.3.0
     # via openai
     # via starlette
     # via watchfiles
+arq==0.25.0
+    # via logfire-demo
 asgiref==3.7.2
     # via opentelemetry-instrumentation-asgi
 asttokens==2.4.1
@@ -31,6 +33,7 @@ certifi==2024.2.2
 charset-normalizer==3.3.2
     # via requests
 click==8.1.7
+    # via arq
     # via uvicorn
 decorator==5.1.1
     # via ipython
@@ -56,6 +59,8 @@ googleapis-common-protos==1.63.0
 h11==0.14.0
     # via httpcore
     # via uvicorn
+hiredis==2.3.2
+    # via redis
 httpcore==1.0.4
     # via httpx
 httptools==0.6.1
@@ -164,6 +169,8 @@ python-multipart==0.0.9
     # via logfire-demo
 pyyaml==6.0.1
     # via uvicorn
+redis==5.0.3
+    # via arq
 regex==2023.12.25
     # via tiktoken
 requests==2.31.0
@@ -193,6 +200,7 @@ traitlets==5.14.2
     # via ipython
     # via matplotlib-inline
 typing-extensions==4.10.0
+    # via arq
     # via asyncpg-stubs
     # via fastapi
     # via logfire

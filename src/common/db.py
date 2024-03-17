@@ -113,6 +113,12 @@ CREATE TABLE IF NOT EXISTS messages (
 );
 CREATE INDEX IF NOT EXISTS messages_chat_id_idx ON messages (chat_id);
 CREATE INDEX IF NOT EXISTS messages_created_at_idx ON messages (created_at);
+
+CREATE TABLE IF NOT EXISTS repo_clocs (
+    repo TEXT PRIMARY KEY,
+    status TEXT NOT NULL,
+    counts JSONB
+);
 """)
     from .cities import create_cities
 
