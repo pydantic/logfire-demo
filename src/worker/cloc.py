@@ -8,7 +8,57 @@ from httpx import AsyncClient, HTTPStatusError
 import logfire
 
 
-async def cloc_logic(client: AsyncClient, repo: str) -> dict[str, int]:
+async def cloc_recursive(client: AsyncClient, repo: str) -> dict[str, int]:
+    file_types = defaultdict(int)
+
+    async def get_file(url: str, file_type: str) -> None:
+        with logfire.span('processing file {url=}', url=url):
+            r = await client.get(url)
+            r.raise_for_status()
+            content = r.json()['content']
+            loc = base64.b64decode(content.encode().replace(b'\n', b'')).count(b'\n')
+            file_types[file_type] += loc
+
+    async def get_dir(url: str) -> None:
+        with logfire.span('processing dir {url=}', url=url):
+            r = await client.get(url)
+            r.raise_for_status()
+            tasks = []
+
+            for p in r.json():
+                match p['type']:
+                    case 'file':
+                        if '.' in p['name']:
+                            if file_type := file_type_lookup.get(p['name'].rsplit('.', 1)[1]):
+                                tasks.append(get_file(p['url'], file_type))
+                    case 'dir':
+                        tasks.append(get_dir(p['url']))
+
+            await asyncio.gather(*tasks)
+
+    try:
+        await get_dir(f'https://api.github.com/repos/{repo}/contents/')
+    except HTTPStatusError as exc:
+        resp = exc.response
+        try:
+            data = resp.json()
+        except ValueError:
+            data = resp.text
+        logfire.error(
+            'cloc_recursive unexpected response {status}',
+            status=resp.status_code,
+            response_data=data,
+            response_headers=resp.headers,
+        )
+        raise
+    else:
+        return dict(file_types)
+
+
+async def cloc_queue(client: AsyncClient, repo: str) -> dict[str, int]:
+    """
+    Fast but hard to debug.
+    """
     file_types = defaultdict(int)
 
     async def worker(queue: asyncio.Queue[GitHubFile | GitHubDir]) -> None:
@@ -124,4 +174,3 @@ file_type_lookup: dict[str, str] = {
     'toml': 'TOML',
     'json': 'JSON',
 }
-

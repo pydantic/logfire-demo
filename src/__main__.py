@@ -8,6 +8,7 @@ match service:
         webui.run()
     case 'tiling':
         from . import tiling
+
         tiling.run()
     case 'worker':
         from . import worker
