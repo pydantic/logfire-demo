@@ -57,7 +57,7 @@ async def start_worker(
         await con.execute(
             """
             INSERT INTO repo_clocs (repo, status) VALUES ($1, 'queued')
-            ON CONFLICT (repo) DO NOTHING
+            ON CONFLICT (repo) DO UPDATE SET status = 'queued'
             """,
             repo.repo,
         )
