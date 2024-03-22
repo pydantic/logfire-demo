@@ -118,9 +118,7 @@ async def llm_stream(db: Database, http_client: AsyncClientDep, chat_id: UUID) -
         finally:
             async with db.acquire() as conn:
                 await conn.execute(
-                    """
-                    insert into messages (chat_id, role, message, cost) VALUES ($1, 'system', $2, $3)
-                    """,
+                    "insert into messages (chat_id, role, message, cost) VALUES ($1, 'system', $2, $3)",
                     chat_id,
                     output,
                     input_usage + output_usage,
