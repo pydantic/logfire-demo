@@ -78,7 +78,7 @@ importlib-metadata==6.11.0
 ipython==8.22.2
 jedi==0.19.1
     # via ipython
-logfire==0.21.0
+logfire==0.22.0
     # via logfire-demo
 markdown-it-py==3.0.0
     # via rich

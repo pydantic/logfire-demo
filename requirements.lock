@@ -64,7 +64,7 @@ idna==3.6
     # via requests
 importlib-metadata==6.11.0
     # via opentelemetry-api
-logfire==0.21.0
+logfire==0.22.0
     # via logfire-demo
 markdown-it-py==3.0.0
     # via rich
