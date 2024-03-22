@@ -11,33 +11,34 @@ import logfire
 async def cloc_recursive(client: AsyncClient, repo: str) -> dict[str, int]:
     file_types = defaultdict(int)
 
-    async def get_file(url: str, file_type: str) -> None:
-        with logfire.span('processing file {url=}', url=url):
+    async def get_file(url: str, file_type: str, file_name: str) -> None:
+        with logfire.span('processing file {file_name=}', file_name=file_name):
             r = await client.get(url)
             r.raise_for_status()
             content = r.json()['content']
             loc = base64.b64decode(content.encode().replace(b'\n', b'')).count(b'\n')
             file_types[file_type] += loc
 
-    async def get_dir(url: str) -> None:
-        with logfire.span('processing dir {url=}', url=url):
+    async def get_dir(url: str, file_name: str) -> None:
+        with logfire.span('processing dir {file_name=}', file_name=file_name):
             r = await client.get(url)
             r.raise_for_status()
             tasks = []
 
             for p in r.json():
+                name = p['name']
                 match p['type']:
                     case 'file':
                         if '.' in p['name']:
                             if file_type := file_type_lookup.get(p['name'].rsplit('.', 1)[1]):
-                                tasks.append(get_file(p['url'], file_type))
+                                tasks.append(get_file(p['url'], file_type, name))
                     case 'dir':
-                        tasks.append(get_dir(p['url']))
+                        tasks.append(get_dir(p['url'], name))
 
             await asyncio.gather(*tasks)
 
     try:
-        await get_dir(f'https://api.github.com/repos/{repo}/contents/')
+        await get_dir(f'https://api.github.com/repos/{repo}/contents/', 'root')
     except HTTPStatusError as exc:
         resp = exc.response
         try:
