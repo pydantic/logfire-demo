@@ -64,6 +64,7 @@ services:
       - key: SERVICE
         value: spider
       - key: LOGFIRE_TOKEN
+        sync: false
   - type: redis
     name: arq-redis
     plan: starter
