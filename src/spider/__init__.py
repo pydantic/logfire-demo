@@ -6,7 +6,7 @@ from httpx import AsyncClient
 
 from . import tasks
 
-logfire.configure(send_to_logfire='if-token-present', service_name='spider')
+logfire.configure(service_name='spider')
 
 
 def run():
