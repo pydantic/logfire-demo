@@ -24,6 +24,6 @@ async def arun():
                 case 'llm_query':
                     await tasks.llm_query(client)
 
-            delay = 15 + random.random() * 45
-            with logfire.span(f'waiting {delay}', delay=delay):
+            delay = int(15 + random.random() * 45)
+            with logfire.span(f'waiting {delay}s', delay=delay):
                 await asyncio.sleep(delay)
