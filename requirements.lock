@@ -64,7 +64,7 @@ idna==3.6
     # via requests
 importlib-metadata==6.11.0
     # via opentelemetry-api
-logfire==0.22.0
+logfire==0.23.0
     # via logfire-demo
 markdown-it-py==3.0.0
     # via rich
@@ -79,6 +79,7 @@ opentelemetry-api==1.23.0
     # via opentelemetry-instrumentation-asyncpg
     # via opentelemetry-instrumentation-fastapi
     # via opentelemetry-instrumentation-httpx
+    # via opentelemetry-instrumentation-system-metrics
     # via opentelemetry-sdk
 opentelemetry-exporter-otlp-proto-common==1.23.0
     # via opentelemetry-exporter-otlp-proto-http
@@ -98,12 +99,15 @@ opentelemetry-instrumentation-fastapi==0.44b0
     # via logfire
 opentelemetry-instrumentation-httpx==0.44b0
     # via logfire
+opentelemetry-instrumentation-system-metrics==0.44b0
+    # via logfire
 opentelemetry-proto==1.23.0
     # via opentelemetry-exporter-otlp-proto-common
     # via opentelemetry-exporter-otlp-proto-http
 opentelemetry-sdk==1.23.0
     # via logfire
     # via opentelemetry-exporter-otlp-proto-http
+    # via opentelemetry-instrumentation-system-metrics
 opentelemetry-semantic-conventions==0.44b0
     # via opentelemetry-instrumentation-asgi
     # via opentelemetry-instrumentation-asyncpg
@@ -120,6 +124,8 @@ protobuf==4.25.3
     # via googleapis-common-protos
     # via logfire
     # via opentelemetry-proto
+psutil==5.9.8
+    # via opentelemetry-instrumentation-system-metrics
 pydantic==2.6.4
     # via fastapi
     # via fastui

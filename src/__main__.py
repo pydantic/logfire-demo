@@ -1,18 +1,13 @@
 import os
+import importlib
 
 service = os.getenv('SERVICE')
-match service:
-    case 'webui':
-        from . import webui
-
-        webui.run()
-    case 'tiling':
-        from . import tiling
-
-        tiling.run()
-    case 'worker':
-        from . import worker
-
-        worker.run()
-    case _:
-        raise RuntimeError(f'Unknown service: {service}')
+services = 'webui', 'tiling', 'worker', 'spider'
+if service is None:
+    print('SERVICE environment variable not set')
+    print('Available services:', ', '.join(services))
+elif service in services:
+    module = importlib.import_module(f'.{service}', package='src')
+    module.run()
+else:
+    print(f'Unknown service: {service}')
