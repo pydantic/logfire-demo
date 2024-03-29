@@ -2,6 +2,9 @@ FROM python:3.12-alpine
 
 WORKDIR /app
 
+# required for logfire[system-metrics] which in turn requires psutlils
+RUN apk add --no-cache gcc musl-dev linux-headers && rm -rf /var/cache/apk/*
+
 RUN pip install uv
 
 COPY ./requirements.lock /app
