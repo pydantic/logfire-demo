@@ -27,4 +27,4 @@ ArqRedisDep = Annotated[ArqRedis, Depends(_arq_redis)]
 
 class GeneralSettings(BaseSettings):
     pg_dsn: str = 'postgres://postgres:postgres@localhost/logfire_demo'
-    redis_dsn: str = 'redis://localhost:63790'
+    redis_dsn: str = 'redis://localhost:6379/0'

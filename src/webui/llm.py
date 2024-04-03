@@ -1,3 +1,7 @@
+import asyncio
+import hashlib
+import json
+from random import random
 from typing import Annotated, AsyncIterable
 from uuid import UUID
 
@@ -79,8 +83,7 @@ async def llm_stream(db: Database, http_client: AsyncClientDep, chat_id: UUID) -
         )
         logfire.info('{cost_today=}', cost_today=tokens_used)
 
-        # 1m tokens is $10 if I've done my math right
-        if tokens_used is not None and tokens_used > 1_000_000:
+        if tokens_used is not None and tokens_used > 500_000:
             content = [_sse_message(f'**Limit Exceeded**:\n\nDaily token limit exceeded.')]
             return StreamingResponse(content, media_type='text/event-stream')
 
@@ -90,11 +93,44 @@ async def llm_stream(db: Database, http_client: AsyncClientDep, chat_id: UUID) -
             chat_id,
         )
 
-    async def gen() -> AsyncIterable[str]:
-        messages = [{'role': 'system', 'content': 'Please response in markdown only.'}, *map(dict, chat_messages)]
+        questions = '|'.join(m['content'].lower() for m in chat_messages if m['role'] == 'user')
+        questions_hash = hashlib.md5(questions.encode()).hexdigest()
+
+        opt_chunks = await conn.fetchval('select chunks from llm_results where questions_hash = $1', questions_hash)
+
+    messages = [{'role': 'system', 'content': 'Please response in markdown only.'}, *map(dict, chat_messages)]
+
+    async def gen_saved(chunks_json: str) -> AsyncIterable[str]:
+        """
+        Generate a result based on on previously saved chunks.
+        """
+        chunks = json.loads(chunks_json)
+        output = ''
+        try:
+            await asyncio.sleep(0.5 + random() * 0.5)
+            with logfire.span('saved result {messages=}', messages=messages) as logfire_span:
+                for chunk in chunks:
+                    if chunk is not None:
+                        output += chunk
+                        yield _sse_message(f'**{OPENAI_MODEL.upper()}s**:\n\n{output}')
+
+                    # 0.12s delay is taken roughly from
+                    # https://github.com/pydantic/FastUI/blob/196414360b69b3dab7012576f852229831307883/demo/sse.py#L66C1-L388C2
+                    await asyncio.sleep(random() * 0.12)
+                logfire_span.set_attribute('output', output)
+        finally:
+            async with db.acquire() as conn:
+                await conn.execute(
+                    "insert into messages (chat_id, role, message, cost) VALUES ($1, 'system', $2, 0)",
+                    chat_id,
+                    output,
+                )
+
+    async def gen_openai() -> AsyncIterable[str]:
         output = ''
         input_usage = sum(_count_usage(m['content']) for m in messages if m['role'] in ('system', 'user'))
         output_usage = 0
+        output_chunks = []
         try:
             with logfire.span('openai {model=} {messages=}', model=OPENAI_MODEL, messages=messages) as logfire_span:
                 chunks = await AsyncOpenAI(http_client=http_client).chat.completions.create(
@@ -103,18 +139,23 @@ async def llm_stream(db: Database, http_client: AsyncClientDep, chat_id: UUID) -
                     stream=True,
                 )
 
-                chunk_count = 0
                 async for chunk in chunks:
                     text = chunk.choices[0].delta.content
-                    chunk_count += 1
+                    output_chunks.append(text)
                     if text is not None:
                         output += text
                         yield _sse_message(f'**{OPENAI_MODEL.upper()}**:\n\n{output}')
-                logfire_span.set_attribute('chunk_count', chunk_count)
+                logfire_span.set_attribute('chunk_count', len(output_chunks))
                 logfire_span.set_attribute('output', output)
                 logfire_span.set_attribute('input_usage', input_usage)
                 output_usage = _count_usage(output)
                 logfire_span.set_attribute('output_usage', output_usage)
+            async with db.acquire() as conn:
+                await conn.execute(
+                    "insert into llm_results (questions_hash, chunks) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+                    questions_hash,
+                    json.dumps(output_chunks),
+                )
         finally:
             async with db.acquire() as conn:
                 await conn.execute(
@@ -124,7 +165,11 @@ async def llm_stream(db: Database, http_client: AsyncClientDep, chat_id: UUID) -
                     input_usage + output_usage,
                 )
 
-    return StreamingResponse(gen(), media_type='text/event-stream')
+    if opt_chunks:
+        gen = gen_saved(opt_chunks)
+    else:
+        gen = gen_openai()
+    return StreamingResponse(gen, media_type='text/event-stream')
 
 
 TOKEN_ENCODER = tiktoken.encoding_for_model(OPENAI_MODEL)

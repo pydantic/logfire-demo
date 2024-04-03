@@ -119,6 +119,12 @@ CREATE TABLE IF NOT EXISTS repo_clocs (
     status TEXT NOT NULL,
     counts JSONB
 );
+
+CREATE TABLE IF NOT EXISTS llm_results (
+    questions_hash TEXT PRIMARY KEY,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    chunks JSON  -- isn't filtered, so use JSON instead of JSONB
+);
 """)
     from .cities import create_cities
 
