@@ -135,25 +135,26 @@ async def llm_stream(db: Database, http_client: AsyncClientDep, chat_id: UUID) -
         try:
             openai_client = AsyncOpenAI(http_client=http_client)
             logfire.instrument_openai(openai_client=openai_client)
-            chunks = await openai_client.chat.completions.create(
-                model=OPENAI_MODEL,
-                messages=messages,
-                stream=True,
-            )
-
-            async for chunk in chunks:
-                text = chunk.choices[0].delta.content
-                output_chunks.append(text)
-                if text is not None:
-                    output += text
-                    yield _sse_message(f'**{OPENAI_MODEL.upper()}**:\n\n{output}')
-            output_usage = _count_usage(output)
-            async with db.acquire() as conn:
-                await conn.execute(
-                    'insert into llm_results (questions_hash, chunks) VALUES ($1, $2) ON CONFLICT DO NOTHING',
-                    questions_hash,
-                    json.dumps(output_chunks),
+            with logfire.span('call openai'):
+                chunks = await openai_client.chat.completions.create(
+                    model=OPENAI_MODEL,
+                    messages=messages,
+                    stream=True,
                 )
+
+                async for chunk in chunks:
+                    text = chunk.choices[0].delta.content
+                    output_chunks.append(text)
+                    if text is not None:
+                        output += text
+                        yield _sse_message(f'**{OPENAI_MODEL.upper()}**:\n\n{output}')
+                output_usage = _count_usage(output)
+                async with db.acquire() as conn:
+                    await conn.execute(
+                        'insert into llm_results (questions_hash, chunks) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+                        questions_hash,
+                        json.dumps(output_chunks),
+                    )
         finally:
             async with db.acquire() as conn:
                 await conn.execute(
