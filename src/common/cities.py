@@ -3,10 +3,10 @@ from pathlib import Path
 from typing import Annotated
 
 import logfire
-from logfire.integrations.pydantic import PluginSettings
-from httpx import AsyncClient
-from pydantic import BaseModel, Field, TypeAdapter, BeforeValidator, ConfigDict
 from asyncpg import Connection
+from httpx import AsyncClient
+from logfire.integrations.pydantic import PluginSettings
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, TypeAdapter
 
 config_record = ConfigDict(plugin_settings=PluginSettings(logfire={'record': 'all'}))
 
