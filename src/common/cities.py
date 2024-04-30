@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Annotated
 
 import logfire
-from logfire.integrations.pydantic_plugin import PluginSettings
+from logfire.integrations.pydantic import PluginSettings
 from httpx import AsyncClient
 from pydantic import BaseModel, Field, TypeAdapter, BeforeValidator, ConfigDict
 from asyncpg import Connection
