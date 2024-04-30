@@ -45,8 +45,9 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: logfire_demo
     ports:
-      # to connect: `pgcli postgre://postgres:postgres@localhost:54320/logfire_demo`
+      # to connect: `pgcli postgres://postgres:postgres@localhost:54320/logfire_demo`
       - 54320:5432
     volumes:
       - postgres-data:/var/lib/postgresql/data
