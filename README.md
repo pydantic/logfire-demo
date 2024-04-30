@@ -1,17 +1,17 @@
 # logfire-demo
 
-Describe your project here.
+This project demonstrates [Pydantic Logfire](https://pydantic.dev/logfire).
 
-## Runing the demo
+It's designed to be a simple app with enough functionality to show some of the things Logfire can do.
 
-1. Go to the [logfire dashboard](https://logfire.pydantic.dev/) and create a new project there.
-2. Create a new write token for the project and copy it.
-3. Set the `LOGFIRE_TOKEN` environment variable. `export LOGFIRE_TOKEN=<write token from step 2>`.
-4. Create a new github token by `gh auth token`.
-5. Set the `GITHUB_TOKEN` environment variable. `export GITHUB_TOKEN=<github token from step 4>`.
-6. Run `docker-compose run -d`.
+## Running the demo
 
-Now you can go to the [Logfire demo page](http://localhost:8000/) and surf different part of it.
+1. Follow [these](https://docs.pydantic.dev/logfire/guides/first_steps/) instructions to get setup with logfire, you'll want to export your logfire write token as `LOGFIRE_TOKEN` so it can be used by docker compose.
+2. Create a GitHub token and set the `GITHUB_TOKEN` environment variable. `export GITHUB_TOKEN=<github token from step 4>`  (this is used for the "GitHub lines of code counter" demo).
+3. Create an OpenAI token and set the `OPENAI_API_KEY` environment variable (this is used for the "LLM Query" demo)
+4. Run `docker-compose run -d`.
+
+Now you can go to the [Logfire demo page](http://localhost:8000/) and try the app.
 
 You can find your project `Dashboard` link at the end of the page. Click on the dashboard link
 to see the live logs from the demo project.
