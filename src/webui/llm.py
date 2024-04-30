@@ -149,12 +149,12 @@ async def llm_stream(db: Database, http_client: AsyncClientDep, chat_id: UUID) -
                         output += text
                         yield _sse_message(f'**{OPENAI_MODEL.upper()}**:\n\n{output}')
                 output_usage = _count_usage(output)
-                async with db.acquire() as conn:
-                    await conn.execute(
-                        'insert into llm_results (questions_hash, chunks) VALUES ($1, $2) ON CONFLICT DO NOTHING',
-                        questions_hash,
-                        json.dumps(output_chunks),
-                    )
+            async with db.acquire() as conn:
+                await conn.execute(
+                    'insert into llm_results (questions_hash, chunks) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+                    questions_hash,
+                    json.dumps(output_chunks),
+                )
         finally:
             async with db.acquire() as conn:
                 await conn.execute(
