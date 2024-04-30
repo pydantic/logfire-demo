@@ -1,23 +1,24 @@
 import asyncio
 import hashlib
 import json
+from collections.abc import AsyncIterable
 from random import random
-from typing import Annotated, AsyncIterable
+from typing import Annotated
 from uuid import UUID
 
 import logfire
+import tiktoken
 from fastapi import APIRouter
 from fastui import AnyComponent, FastUI, events
-from fastui.forms import fastui_form
 from fastui import components as c
-from starlette.responses import StreamingResponse
-from pydantic import BaseModel, Field
+from fastui.forms import fastui_form
 from openai import AsyncOpenAI
-import tiktoken
+from pydantic import BaseModel, Field
+from starlette.responses import StreamingResponse
 
-from .shared import demo_page
-from ..common import AsyncClientDep, build_params
+from ..common import AsyncClientDep
 from ..common.db import Database
+from .shared import demo_page
 
 router = APIRouter()
 
@@ -84,7 +85,7 @@ async def llm_stream(db: Database, http_client: AsyncClientDep, chat_id: UUID) -
         logfire.info('{cost_today=}', cost_today=tokens_used)
 
         if tokens_used is not None and tokens_used > 500_000:
-            content = [_sse_message(f'**Limit Exceeded**:\n\nDaily token limit exceeded.')]
+            content = [_sse_message('**Limit Exceeded**:\n\nDaily token limit exceeded.')]
             return StreamingResponse(content, media_type='text/event-stream')
 
         # get messages from this chat
@@ -132,8 +133,10 @@ async def llm_stream(db: Database, http_client: AsyncClientDep, chat_id: UUID) -
         output_usage = 0
         output_chunks = []
         try:
-            with logfire.span('openai {model=} {messages=}', model=OPENAI_MODEL, messages=messages) as logfire_span:
-                chunks = await AsyncOpenAI(http_client=http_client).chat.completions.create(
+            openai_client = AsyncOpenAI(http_client=http_client)
+            logfire.instrument_openai(openai_client=openai_client)
+            with logfire.span('call openai'):
+                chunks = await openai_client.chat.completions.create(
                     model=OPENAI_MODEL,
                     messages=messages,
                     stream=True,
@@ -145,14 +148,10 @@ async def llm_stream(db: Database, http_client: AsyncClientDep, chat_id: UUID) -
                     if text is not None:
                         output += text
                         yield _sse_message(f'**{OPENAI_MODEL.upper()}**:\n\n{output}')
-                logfire_span.set_attribute('chunk_count', len(output_chunks))
-                logfire_span.set_attribute('output', output)
-                logfire_span.set_attribute('input_usage', input_usage)
                 output_usage = _count_usage(output)
-                logfire_span.set_attribute('output_usage', output_usage)
             async with db.acquire() as conn:
                 await conn.execute(
-                    "insert into llm_results (questions_hash, chunks) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+                    'insert into llm_results (questions_hash, chunks) VALUES ($1, $2) ON CONFLICT DO NOTHING',
                     questions_hash,
                     json.dumps(output_chunks),
                 )
