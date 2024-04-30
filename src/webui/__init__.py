@@ -2,27 +2,26 @@ from __future__ import annotations as _annotations
 
 import os
 import sys
-from contextlib import asynccontextmanager, AsyncExitStack
+from contextlib import AsyncExitStack, asynccontextmanager
 
-import logfire
-
+import arq
+from arq.connections import RedisSettings
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, PlainTextResponse
 from fastui import prebuilt_html
 from fastui.auth import fastapi_auth_exception_handling
 from fastui.dev import dev_fastapi_app
 from httpx import AsyncClient
-from starlette.responses import StreamingResponse
-from opentelemetry.instrumentation.asyncpg import AsyncPGInstrumentor
 from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
-import arq
-from arq.connections import RedisSettings
+from starlette.responses import StreamingResponse
+
+import logfire
 
 from ..common import AsyncClientDep, GeneralSettings
 from ..common.db import Database
+from .llm import router as llm_router
 from .main import router as main_router
 from .table import router as table_router
-from .llm import router as llm_router
 from .worker import router as worker_router
 
 os.environ.update(
@@ -30,7 +29,7 @@ os.environ.update(
     OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_RESPONSE='.*',
 )
 logfire.configure(service_name='webui')
-AsyncPGInstrumentor().instrument()
+logfire.instrument_asyncpg()
 
 
 class Settings(GeneralSettings):

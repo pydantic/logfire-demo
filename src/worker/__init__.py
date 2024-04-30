@@ -3,21 +3,18 @@ import json
 import logging.config
 
 import asyncpg
-import logfire
-
+from arq.connections import RedisSettings
+from arq.worker import run_worker
 from httpx import AsyncClient
+from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
+
+import logfire
 
 from ..common import GeneralSettings
 from .cloc import cloc_recursive
 
-from arq.connections import RedisSettings
-from arq.worker import run_worker
-from opentelemetry.instrumentation.asyncpg import AsyncPGInstrumentor
-from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
-
-
 logfire.configure(service_name='worker')
-AsyncPGInstrumentor().instrument()
+logfire.instrument_asyncpg()
 
 
 class Settings(GeneralSettings):
@@ -43,9 +40,7 @@ async def shutdown(ctx):
 
 
 async def cloc(ctx, repo: str):
-    """
-    Count lines of code by language, in a GitHub repository.
-    """
+    """Count lines of code by language, in a GitHub repository."""
     with logfire.span('cloc {repo=}', repo=repo) as span:
         pg_pool: asyncpg.Pool = ctx['pg_pool']
         status = await pg_pool.fetchval('SELECT status FROM repo_clocs WHERE repo = $1', repo)

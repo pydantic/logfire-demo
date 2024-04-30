@@ -64,7 +64,7 @@ idna==3.6
     # via requests
 importlib-metadata==6.11.0
     # via opentelemetry-api
-logfire==0.27.0
+logfire==0.28.0
     # via logfire-demo
 markdown-it-py==3.0.0
     # via rich
@@ -94,7 +94,7 @@ opentelemetry-instrumentation==0.44b0
 opentelemetry-instrumentation-asgi==0.44b0
     # via opentelemetry-instrumentation-fastapi
 opentelemetry-instrumentation-asyncpg==0.44b0
-    # via logfire-demo
+    # via logfire
 opentelemetry-instrumentation-fastapi==0.44b0
     # via logfire
 opentelemetry-instrumentation-httpx==0.44b0

@@ -78,7 +78,7 @@ importlib-metadata==6.11.0
 ipython==8.22.2
 jedi==0.19.1
     # via ipython
-logfire==0.27.0
+logfire==0.28.0
     # via logfire-demo
 markdown-it-py==3.0.0
     # via rich
@@ -112,7 +112,7 @@ opentelemetry-instrumentation==0.44b0
 opentelemetry-instrumentation-asgi==0.44b0
     # via opentelemetry-instrumentation-fastapi
 opentelemetry-instrumentation-asyncpg==0.44b0
-    # via logfire-demo
+    # via logfire
 opentelemetry-instrumentation-fastapi==0.44b0
     # via logfire
 opentelemetry-instrumentation-httpx==0.44b0
