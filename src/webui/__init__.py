@@ -3,9 +3,11 @@ from __future__ import annotations as _annotations
 import os
 import sys
 from contextlib import AsyncExitStack, asynccontextmanager
+from typing import Annotated
 
 import arq
 import logfire
+from annotated_types import Ge, Gt, Le, Lt
 from arq.connections import RedisSettings
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, PlainTextResponse
@@ -89,9 +91,18 @@ async def favicon_ico() -> str:
 
 
 @app.get('/map.jpg')
-async def map_jpg(http_client: AsyncClientDep) -> StreamingResponse:
-    # Show a map of London
-    r = await http_client.get(f'{settings.tiling_server}/map.jpg', params={'lat': 51.5074, 'lng': -0.1})
+async def map_jpg(
+    http_client: AsyncClientDep,
+    # Show a map of London by default
+    lat: Annotated[float, Ge(-85), Le(85)] = 51.5074,
+    lng: Annotated[float, Ge(-180), Le(180)] = -0.1,
+    zoom: Annotated[int, Gt(0), Lt(20)] = 10,
+    width: Annotated[int, Ge(95), Le(1000)] = 600,
+    height: Annotated[int, Ge(60), Le(1000)] = 400,
+    scale: Annotated[int, Ge(1), Le(2)] = 1,
+) -> StreamingResponse:
+    params = {'lat': lat, 'lng': lng, 'zoom': zoom, 'width': width, 'height': height, 'scale': scale}
+    r = await http_client.get(f'{settings.tiling_server}/map.jpg', params=params)
     return StreamingResponse(r.aiter_bytes(), media_type='image/jpeg')
 
 
