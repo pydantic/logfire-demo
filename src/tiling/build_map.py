@@ -3,13 +3,12 @@ import io
 import math
 import random
 from asyncio import Semaphore
+from collections.abc import Awaitable, Iterator, Sequence
 from statistics import mean
 from time import time
-from typing import Sequence, Iterator, Awaitable
 
 import logfire
 from httpx import AsyncClient
-
 from PIL import Image, ImageDraw
 
 __all__ = ('BuildMap',)

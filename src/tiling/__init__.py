@@ -1,19 +1,18 @@
 from __future__ import annotations as _annotations
 
 import os
-from contextlib import asynccontextmanager, AsyncExitStack
+from contextlib import AsyncExitStack, asynccontextmanager
 from typing import Annotated
 
 import logfire
-
-from annotated_types import Ge, Le, Lt, Gt
-from fastapi import FastAPI, Response, Header
+from annotated_types import Ge, Gt, Le, Lt
+from fastapi import FastAPI, Header, Response
 from fastapi.responses import PlainTextResponse
 from httpx import AsyncClient
 from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
 
-from .build_map import BuildMap
 from ..common import AsyncClientDep
+from .build_map import BuildMap
 
 os.environ.update(
     OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_REQUEST='.*',

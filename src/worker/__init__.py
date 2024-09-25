@@ -1,14 +1,15 @@
 import asyncio
 import json
 import logging.config
+from typing import Annotated
 
 import asyncpg
+import logfire
+from annotated_types import MinLen
 from arq.connections import RedisSettings
 from arq.worker import run_worker
 from httpx import AsyncClient
 from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
-
-import logfire
 
 from ..common import GeneralSettings
 from .cloc import cloc_recursive
@@ -18,7 +19,7 @@ logfire.instrument_asyncpg()
 
 
 class Settings(GeneralSettings):
-    github_token: str
+    github_token: Annotated[str, MinLen(1)]
 
 
 settings = Settings()  # type: ignore
@@ -26,7 +27,7 @@ settings = Settings()  # type: ignore
 
 async def startup(ctx):
     headers = {'Accept': 'application/vnd.github.v3+json', 'Authorization': f'token {settings.github_token}'}
-    client = AsyncClient(headers=headers)
+    client = AsyncClient(headers=headers, follow_redirects=True)
     HTTPXClientInstrumentor.instrument_client(client)
     ctx.update(
         client=client,

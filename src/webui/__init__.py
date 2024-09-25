@@ -5,6 +5,7 @@ import sys
 from contextlib import AsyncExitStack, asynccontextmanager
 
 import arq
+import logfire
 from arq.connections import RedisSettings
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, PlainTextResponse
@@ -14,8 +15,6 @@ from fastui.dev import dev_fastapi_app
 from httpx import AsyncClient
 from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
 from starlette.responses import StreamingResponse
-
-import logfire
 
 from ..common import AsyncClientDep, GeneralSettings
 from ..common.db import Database

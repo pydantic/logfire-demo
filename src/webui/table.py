@@ -4,12 +4,11 @@ from fastui import AnyComponent, FastUI, events
 from fastui import components as c
 from fastui.components.display import DisplayLookup
 from fastui.forms import SelectSearchResponse
-from pydantic import Field, BaseModel
+from pydantic import BaseModel, Field
 
-
-from .shared import demo_page
+from ..common import AsyncClientDep, cities
 from ..common.db import Database
-from ..common import cities, AsyncClientDep
+from .shared import demo_page
 
 router = APIRouter()
 

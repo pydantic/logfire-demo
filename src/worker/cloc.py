@@ -1,11 +1,11 @@
 import asyncio
 import base64
 from collections import defaultdict
-from typing import Literal, TypedDict
 from contextlib import suppress
+from typing import Literal, TypedDict
 
-from httpx import AsyncClient, HTTPStatusError
 import logfire
+from httpx import AsyncClient, HTTPStatusError
 
 
 async def cloc_recursive(client: AsyncClient, repo: str) -> dict[str, int]:
@@ -115,10 +115,10 @@ async def cloc_queue(client: AsyncClient, repo: str) -> dict[str, int]:
     while True:
         try:
             await asyncio.wait_for(queue_.join(), timeout=0.5)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             try:
                 await asyncio.wait_for(asyncio.gather(*tasks), timeout=0.5)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 pass
         else:
             break
