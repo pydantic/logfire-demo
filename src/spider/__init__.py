@@ -7,6 +7,7 @@ from httpx import AsyncClient
 from . import tasks
 
 logfire.configure(service_name='spider')
+logfire.instrument_system_metrics()
 
 
 def run():

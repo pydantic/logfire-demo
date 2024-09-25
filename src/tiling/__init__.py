@@ -19,6 +19,7 @@ os.environ.update(
     OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_RESPONSE='.*',
 )
 logfire.configure(service_name='tiling')
+logfire.instrument_system_metrics()
 
 
 @asynccontextmanager

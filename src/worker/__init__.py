@@ -15,6 +15,7 @@ from ..common import GeneralSettings
 from .cloc import cloc_recursive
 
 logfire.configure(service_name='worker')
+logfire.instrument_system_metrics()
 logfire.instrument_asyncpg()
 
 
