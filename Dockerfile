@@ -18,20 +18,10 @@ COPY ./src /app/src
 ARG LOGFIRE_TOKEN
 ENV LOGFIRE_TOKEN=$LOGFIRE_TOKEN
 
-FROM python:3.12-alpine AS base
+FROM python:3.12-alpine AS main
 
 COPY --from=build --chown=app:app /app /app
 WORKDIR /app
 ENV PATH="/app/.venv/bin:$PATH"
 
-FROM base AS webui
-
-CMD ["python", "-m", "src", "webui"]
-
-FROM base AS worker
-
-CMD ["python", "-m", "src", "worker"]
-
-FROM base AS tiling
-
-CMD ["python", "-m", "src", "tiling"]
+CMD ["python", "-m", "src"]
