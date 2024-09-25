@@ -1,7 +1,8 @@
 services:
   webui:
-    build: .
-    container_name: logfire-demo-webui
+    build:
+      context: .
+      target: webui
     ports:
       - 8000:8000
     environment:
@@ -19,8 +20,9 @@ services:
       - redis
 
   tiling:
-    build: .
-    container_name: logfire-demo-tiling
+    build:
+      context: .
+      target: tiling
     environment:
         SERVICE: tiling
         LOGFIRE_TOKEN: $LOGFIRE_TOKEN
@@ -28,8 +30,9 @@ services:
       test: python -c "import urllib.request as r; assert r.urlopen('http://localhost:8000/health').status == 200"
 
   worker:
-    build: .
-    container_name: logfire-demo-worker
+    build:
+      context: .
+      target: worker
     environment:
         SERVICE: worker
         PG_DSN: postgres://postgres:postgres@postgres/logfire_demo

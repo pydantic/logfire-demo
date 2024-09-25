@@ -105,7 +105,9 @@ async def stream_sse(client: AsyncClient, sse_endpoint: str) -> str | None:
 SITE = 'https://demo.logfire.dev'
 
 
-async def _request(client: AsyncClient, path: str, *, params: dict[str, str] | None = None, method: str = 'GET', **kwargs) -> Response:
+async def _request(
+    client: AsyncClient, path: str, *, params: dict[str, str] | None = None, method: str = 'GET', **kwargs
+) -> Response:
     with logfire.span('{method} {path!r} {params=}', method=method, path=path, params=params) as span:
         requests_counter.add(1)
         r = await client.request(method, f'{SITE}{path}', params=params, **kwargs)
@@ -127,11 +129,11 @@ def _find_key(json_data: Any, target_key):
         for key, value in json_data.items():
             if key == target_key:
                 return value
-            if isinstance(value, (dict, list)):
+            if isinstance(value, dict | list):
                 if found := _find_key(value, target_key):
                     return found
     elif isinstance(json_data, list):
         for item in json_data:
-            if isinstance(item, (dict, list)):
+            if isinstance(item, dict | list):
                 if found := _find_key(item, target_key):
                     return found

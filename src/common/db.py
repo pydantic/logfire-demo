@@ -1,14 +1,14 @@
 import asyncio
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
-from typing import AsyncIterator, Self, Annotated
+from typing import Annotated, Self
 from urllib.parse import urlparse
 
-from fastapi import Request, Depends
-
-import logfire
 import asyncpg
+import logfire
 from asyncpg.connection import Connection
+from fastapi import Depends, Request
 
 __all__ = ('Database',)
 

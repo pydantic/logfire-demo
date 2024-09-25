@@ -1,9 +1,9 @@
 import urllib.parse
 from typing import Annotated, Any
 
-from httpx import AsyncClient
-from fastapi import Request, Depends
 from arq import ArqRedis
+from fastapi import Depends, Request
+from httpx import AsyncClient
 from pydantic_settings import BaseSettings
 
 
