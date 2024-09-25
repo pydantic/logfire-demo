@@ -1,4 +1,4 @@
-FROM python:3.12-alpine as base
+FROM python:3.12-alpine AS build
 
 WORKDIR /app
 
@@ -9,6 +9,8 @@ RUN pip install uv
 
 COPY pyproject.toml uv.lock ./
 
+ENV UV_COMPILE_BYTECODE=1
+
 RUN uv sync --locked --no-install-project --no-dev
 
 COPY ./src /app/src
@@ -16,6 +18,10 @@ COPY ./src /app/src
 ARG LOGFIRE_TOKEN
 ENV LOGFIRE_TOKEN=$LOGFIRE_TOKEN
 
+FROM python:3.12-alpine AS base
+
+COPY --from=build --chown=app:app /app /app
+WORKDIR /app
 ENV PATH="/app/.venv/bin:$PATH"
 
 FROM base AS webui
