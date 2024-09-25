@@ -9,11 +9,11 @@ services = 'webui', 'tiling', 'worker', 'spider'
 # min duration is 1ms, spider isn't helped by auto tracing
 logfire.install_auto_tracing(modules=[f'src.{s}' for s in services if s != 'spider'], min_duration=0.01)
 if service is None:
-    print('service argument variable not provided')
-    print('Available services:', ', '.join(services))
+    print('service argument variable not provided', file=sys.stderr)
+    print('Available services:', ', '.join(services), file=sys.stderr)
 elif service in services:
     module = importlib.import_module(f'.{service}', package='src')
     module.run()
 else:
-    print(f'Unknown service: {service}')
-    print('Available services:', ', '.join(services))
+    print(f'Unknown service: {service}', file=sys.stderr)
+    print('Available services:', ', '.join(services), file=sys.stderr)

@@ -31,7 +31,7 @@ services:
     dockerfilePath: ./Dockerfile
     envVars:
       - key: SERVICE
-        value: tilings
+        value: tiling
       - key: LOGFIRE_TOKEN
         sync: false
   - type: worker
