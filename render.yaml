@@ -4,9 +4,8 @@ services:
     runtime: docker
     rootDir: .
     dockerfilePath: ./Dockerfile
+    target: webui
     envVars:
-      - key: SERVICE
-        value: webui
       - key: LOGFIRE_TOKEN
         sync: false
       - key: TILING_SERVER
@@ -29,9 +28,8 @@ services:
     runtime: docker
     rootDir: .
     dockerfilePath: ./Dockerfile
+    target: tiling
     envVars:
-      - key: SERVICE
-        value: tiling
       - key: LOGFIRE_TOKEN
         sync: false
   - type: worker
@@ -39,9 +37,8 @@ services:
     runtime: docker
     rootDir: .
     dockerfilePath: ./Dockerfile
+    target: worker
     envVars:
-      - key: SERVICE
-        value: worker
       - key: LOGFIRE_TOKEN
         sync: false
       - key: GITHUB_TOKEN
@@ -60,9 +57,8 @@ services:
     runtime: docker
     rootDir: .
     dockerfilePath: ./Dockerfile
+    target: spider
     envVars:
-      - key: SERVICE
-        value: spider
       - key: LOGFIRE_TOKEN
         sync: false
   - type: redis
