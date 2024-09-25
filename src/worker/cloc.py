@@ -56,7 +56,7 @@ async def cloc_recursive(client: AsyncClient, repo: str) -> dict[str, int]:
         return dict(file_types)
 
 
-async def cloc_queue(client: AsyncClient, repo: str) -> dict[str, int]:
+async def cloc_queue(client: AsyncClient, repo: str) -> dict[str, int]:  # noqa: C901
     """
     Fast but hard to debug.
     """

@@ -129,11 +129,11 @@ def _find_key(json_data: Any, target_key):
         for key, value in json_data.items():
             if key == target_key:
                 return value
-            if isinstance(value, (dict, list)):
+            if isinstance(value, dict | list):
                 if found := _find_key(value, target_key):
                     return found
     elif isinstance(json_data, list):
         for item in json_data:
-            if isinstance(item, (dict, list)):
+            if isinstance(item, dict | list):
                 if found := _find_key(item, target_key):
                     return found
