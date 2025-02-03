@@ -15,6 +15,7 @@ dependencies = [
     "logfire[asyncpg,fastapi,httpx,system-metrics]>=0.53.0",
     "openai>=1.47.1",
     "pillow>=10.4.0",
+    "pydantic==2.9.2",
     "pydantic-settings>=2.5.2",
     "python-multipart>=0.0.10",
     "tiktoken>=0.7.0",
