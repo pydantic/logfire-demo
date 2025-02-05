@@ -1,6 +1,3 @@
-from typing import Annotated
-
-from fastapi import Depends, Request
 from pydantic import SecretStr
 
 from ..common import GeneralSettings
@@ -15,10 +12,3 @@ class Settings(GeneralSettings):
 
 
 settings = Settings()  # type: ignore
-
-
-def _get_settings(request: Request) -> Settings:
-    return request.app.state.settings
-
-
-AppSettings = Annotated[Settings, Depends(_get_settings)]
