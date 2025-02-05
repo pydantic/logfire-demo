@@ -48,7 +48,7 @@ async def filter_cities(conn: Connection, iso3: str, offset: int) -> tuple[list[
 
 
 async def search_name(client: AsyncClient, name: str) -> list[dict[str, str]]:
-    url = f'https://restcountries.com/v3.1/{f'name/{name}' if name else 'all'}'
+    url = f'https://restcountries.com/v3.1/{f"name/{name}" if name else "all"}'
     with logfire.span('GET {url=}', url=url):
         r = await client.get(url)
     if r.status_code == 404:
