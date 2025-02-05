@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from openai import AsyncOpenAI
 
 from ..common.db import Database
-from .settings import AppSettings
+from .settings import settings
 
 router = APIRouter()
 
@@ -69,7 +69,6 @@ def verify_github_signature(secret: str, payload: bytes, signature: str) -> bool
 async def github_webhook(
     request: Request,
     db: Database,
-    app_settings: AppSettings,
     openai_client: AsyncOpenAIClientDep,
     x_hub_signature_256: str = Header(None),  # GitHub sends signature in headers
 ):
@@ -77,7 +76,7 @@ async def github_webhook(
     payload = await request.body()
 
     # Verify signature for security
-    if not verify_github_signature(app_settings.github_webhook_secret.get_secret_value(), payload, x_hub_signature_256):
+    if not verify_github_signature(settings.github_webhook_secret.get_secret_value(), payload, x_hub_signature_256):
         raise HTTPException(status_code=403, detail='Invalid signature')
 
     data = await request.json()  # Convert request payload to JSON
@@ -158,10 +157,10 @@ def verify_slack_signature(request: Request, body: bytes, slack_signing_secret: 
 
 
 @router.post('/slack/events')
-async def slack_events(request: Request, db: Database, openai_client: AsyncOpenAIClientDep, app_settings: AppSettings):
+async def slack_events(request: Request, db: Database, openai_client: AsyncOpenAIClientDep):
     """Receive Slack messages via webhook"""
     body = await request.body()
-    if not verify_slack_signature(request, body, app_settings.slack_signing_secret.get_secret_value()):
+    if not verify_slack_signature(request, body, settings.slack_signing_secret.get_secret_value()):
         raise HTTPException(status_code=403, detail='Invalid signature')
 
     data = json.loads(body)
@@ -175,7 +174,7 @@ async def slack_events(request: Request, db: Database, openai_client: AsyncOpenA
         logfire.info('Received Slack event: {event}', event=event)
 
         # Only process messages from allowed channels
-        if event.get('channel') not in app_settings.slack_channel_ids:
+        if event.get('channel') not in settings.slack_channel_ids:
             logfire.error('Invalid Slack channel: {channel}', channel=event.get('channel'))
             return {'message': 'Invalid channel'}
 
