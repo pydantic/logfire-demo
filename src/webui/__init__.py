@@ -15,14 +15,17 @@ from fastui import prebuilt_html
 from fastui.auth import fastapi_auth_exception_handling
 from fastui.dev import dev_fastapi_app
 from httpx import AsyncClient
+from openai import AsyncOpenAI
 from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
 from starlette.responses import StreamingResponse
 
-from ..common import AsyncClientDep, GeneralSettings
+from ..common import AsyncClientDep
 from ..common.db import Database
 from .llm import router as llm_router
 from .main import router as main_router
+from .settings import settings
 from .table import router as table_router
+from .web_hooks import router as web_hooks_router
 from .worker import router as worker_router
 
 os.environ.update(
@@ -34,14 +37,6 @@ logfire.instrument_system_metrics()
 logfire.instrument_asyncpg()
 
 
-class Settings(GeneralSettings):
-    create_database: bool = True
-    tiling_server: str = 'http://localhost:8001'
-
-
-settings = Settings()  # type: ignore
-
-
 @asynccontextmanager
 async def lifespan(app_: FastAPI):
     async with AsyncExitStack() as stack:
@@ -51,6 +46,9 @@ async def lifespan(app_: FastAPI):
             Database.create(settings.pg_dsn, True, settings.create_database)
         )
         app_.state.arq_redis = await arq.create_pool(RedisSettings.from_dsn(settings.redis_dsn))
+        app_.state.settings = settings
+        app_.state.openai_client = openai_client = AsyncOpenAI(http_client=httpx_client)
+        logfire.instrument_openai(openai_client=openai_client)
         yield
 
 
@@ -69,6 +67,7 @@ app.include_router(table_router, prefix='/api/table')
 app.include_router(llm_router, prefix='/api/llm')
 app.include_router(worker_router, prefix='/api/worker')
 app.include_router(main_router, prefix='/api')
+app.include_router(web_hooks_router, prefix='/webhooks')
 
 
 @app.get('/robots.txt', response_class=PlainTextResponse)

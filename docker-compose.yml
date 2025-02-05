@@ -11,6 +11,9 @@ services:
         # forward the openapi key from the host environment
         OPENAI_API_KEY: $OPENAI_API_KEY
         LOGFIRE_TOKEN: $LOGFIRE_TOKEN
+        GITHUB_WEBHOOK_SECRET: $GITHUB_WEBHOOK_SECRET
+        SLACK_SIGNING_SECRET: $SLACK_SIGNING_SECRET
+        SLACK_CHANNEL_IDS: $SLACK_CHANNEL_IDS
     healthcheck:
       test: python -c "import urllib.request as r; assert r.urlopen('http://localhost:8000/health').status == 200"
     depends_on:
@@ -37,7 +40,7 @@ services:
       test: arq src.worker.WorkerSettings --check
 
   postgres:
-    image: postgres:latest
+    image: ankane/pgvector:latest
     container_name: logfire-demo-postgres
     environment:
       POSTGRES_USER: postgres

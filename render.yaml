@@ -13,6 +13,12 @@ services:
         value: "https://tiling.onrender.com"
       - key: OPENAI_API_KEY
         sync: false
+      - key: GITHUB_WEBHOOK_SECRET
+        sync: false
+      - key: SLACK_SIGNING_SECRET
+        sync: false
+      - key: SLACK_CHANNEL_IDS
+        sync: false
       - key: CREATE_DATABASE
         value: "false"
       - key: PG_DSN

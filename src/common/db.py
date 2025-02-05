@@ -125,6 +125,19 @@ CREATE TABLE IF NOT EXISTS llm_results (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     chunks JSON  -- isn't filtered, so use JSON instead of JSONB
 );
+
+CREATE EXTENSION IF NOT EXISTS vector;
+CREATE TABLE IF NOT EXISTS conversations (
+    id SERIAL PRIMARY KEY,             -- Unique ID for each entry
+    source TEXT NOT NULL,       -- "github_issue", "slack_message"
+    external_reference TEXT NOT NULL, -- GitHub link, Slack message ID
+    parent TEXT,               -- GitHub issue, Thread TS (for Slack threads)
+    text TEXT NOT NULL,                -- The actual text content
+    author TEXT NOT NULL,      -- Author of the message
+    event_ts TIMESTAMPTZ DEFAULT NOW(), -- Timestamp of when the event occurred
+    created_at TIMESTAMPTZ DEFAULT NOW(), -- Timestamp of when the entry was created
+    embedding VECTOR(1536)              -- For storing embeddings
+);
 """)
     from .cities import create_cities
 
