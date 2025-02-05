@@ -140,6 +140,7 @@ async def llm_stream(db: Database, http_client: AsyncClientDep, chat_id: UUID) -
                     model=OPENAI_MODEL,
                     messages=messages,
                     stream=True,
+                    stream_options={'include_usage': True},
                 )
 
                 async for chunk in chunks:
