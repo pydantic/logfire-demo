@@ -31,7 +31,7 @@ async def get_cities(client: AsyncClient, country: str | None = None):
         if country or random.random() > 0.5:
             with logfire.span('get city'):
                 city = random.choice(cities)
-                await _request(client, f'/api/table/{city['id']}')
+                await _request(client, f'/api/table/{city["id"]}')
         else:
             await search_cities(client)
 
