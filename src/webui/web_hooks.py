@@ -105,7 +105,7 @@ async def github_webhook(
         if data.get('action') == 'created':
             issue = data.get('issue')
             comment = data.get('comment')
-            if not issue or not comment:
+            if not issue or not comment or 'pull_request' in issue:
                 logfire.error('Invalid GitHub comment: {data}', data=data)
                 return {'message': 'Invalid comment'}
 
