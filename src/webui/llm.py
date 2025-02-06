@@ -144,6 +144,9 @@ async def llm_stream(db: Database, http_client: AsyncClientDep, chat_id: UUID) -
                 )
 
                 async for chunk in chunks:
+                    if not chunk.choices:
+                        # Ignore the usage chunk at the end
+                        continue
                     text = chunk.choices[0].delta.content
                     output_chunks.append(text)
                     if text is not None:
