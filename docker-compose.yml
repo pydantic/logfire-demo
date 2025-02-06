@@ -1,6 +1,7 @@
 services:
   webui:
     build: .
+    platform: linux/amd64
     ports:
       - 8000:8000
     environment:
@@ -13,7 +14,7 @@ services:
         LOGFIRE_TOKEN: $LOGFIRE_TOKEN
         GITHUB_WEBHOOK_SECRET: $GITHUB_WEBHOOK_SECRET
         SLACK_SIGNING_SECRET: $SLACK_SIGNING_SECRET
-        SLACK_CHANNEL_IDS: $SLACK_CHANNEL_IDS
+        SLACK_CHANNEL_IDS: ${SLACK_CHANNEL_IDS:-[]}
     healthcheck:
       test: python -c "import urllib.request as r; assert r.urlopen('http://localhost:8000/health').status == 200"
     depends_on:
@@ -22,6 +23,7 @@ services:
 
   tiling:
     build: .
+    platform: linux/amd64
     environment:
         SERVICE: tiling
         LOGFIRE_TOKEN: $LOGFIRE_TOKEN
@@ -30,6 +32,7 @@ services:
 
   worker:
     build: .
+    platform: linux/amd64
     environment:
         SERVICE: worker
         PG_DSN: postgres://postgres:postgres@postgres/logfire_demo
@@ -71,4 +74,4 @@ volumes:
 
 networks:
   default:
-    name: dev
+    name: logfire-demo-dev
