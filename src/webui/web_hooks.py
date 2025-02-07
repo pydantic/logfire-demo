@@ -2,14 +2,14 @@ import hashlib
 import hmac
 import json
 from datetime import UTC, datetime
-from typing import Annotated, Literal
+from typing import Annotated
 
 import logfire
-from asyncpg import Connection
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from openai import AsyncOpenAI
 
 from ..common.db import Database
+from ..common.embeddings import create_embeddings, generate_embedding, hash_text
 from .settings import settings
 
 router = APIRouter()
@@ -20,42 +20,6 @@ def _get_openai_client(request: Request) -> AsyncOpenAI:
 
 
 AsyncOpenAIClientDep = Annotated[AsyncOpenAI, Depends(_get_openai_client)]
-
-
-ConversationSource = Literal['slack_message', 'github_issue']
-
-
-async def create_conversation(
-    conn: Connection,
-    source: ConversationSource,
-    external_reference: str,
-    text: str,
-    author: str,
-    event_ts: datetime,
-    embedding: list[list[float]],
-    parent: str | None = None,
-) -> None:
-    """Create a new conversation in the database"""
-    embedding_str = '[' + ','.join(map(str, embedding)) + ']'
-    await conn.execute(
-        """
-        INSERT INTO conversations (source, external_reference, text, author, event_ts, embedding, parent)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
-        """,
-        source,
-        external_reference,
-        text,
-        author,
-        event_ts,
-        embedding_str,
-        parent,
-    )
-
-
-async def generate_embedding(openai_client: AsyncOpenAI, text: str) -> list[float]:
-    with logfire.span('call openai'):
-        response = await openai_client.embeddings.create(input=text, model='text-embedding-ada-002')
-        return response.data[0].embedding
 
 
 def verify_github_signature(secret: str, payload: bytes, signature: str) -> bool:
@@ -124,11 +88,12 @@ async def github_webhook(
     embedding = await generate_embedding(openai_client, text)
 
     async with db.acquire_trans() as conn:
-        await create_conversation(
+        await create_embeddings(
             conn,
             source='github_issue',
             external_reference=external_reference,
             text=text,
+            text_hash=hash_text(text),
             author=author,
             event_ts=event_ts,
             embedding=embedding,
@@ -193,11 +158,12 @@ async def slack_events(request: Request, db: Database, openai_client: AsyncOpenA
             embedding = await generate_embedding(openai_client, text)
 
             async with db.acquire_trans() as conn:
-                await create_conversation(
+                await create_embeddings(
                     conn,
                     source='slack_message',
                     external_reference=external_reference,
                     text=text,
+                    text_hash=hash_text(text),
                     author=author,
                     event_ts=event_ts,
                     embedding=embedding,
