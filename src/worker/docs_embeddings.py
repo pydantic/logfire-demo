@@ -68,15 +68,15 @@ async def update_docs_embeddings(
         for section in sections:
             try:
                 section_content = f'{section["title"]} {section["content"]}'
-                embeddings = await generate_embedding(openai_client, section_content)
                 text_hash = hash_text(section_content)
                 hashes.add(text_hash)
                 if text_hash in stored_hashes:
                     logfire.info('Skipping {text_hash=}', text_hash=text_hash)
                     continue
+                embeddings = await generate_embedding(openai_client, section_content)
                 await create_embeddings(
                     conn,
-                    source='pydantic_ai_docs',
+                    source=source,
                     text=section_content,
                     text_hash=text_hash,
                     embedding=embeddings,
