@@ -17,7 +17,7 @@ def hash_text(text: str) -> str:
     return hashlib.md5(text.encode()).hexdigest()
 
 
-EmbeddingsSource = Literal['slack_message', 'github_issue', 'pydantic_ai_docs', 'logfire_docs']
+EmbeddingsSource = Literal['slack_message', 'github_issue', 'pydantic_docs', 'pydantic_ai_docs', 'logfire_docs']
 
 
 async def get_stored_embeddings_hash_by_source(conn: Connection, source: EmbeddingsSource) -> list[str]:
