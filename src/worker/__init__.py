@@ -77,12 +77,27 @@ async def pydantic_ai_doc_embeddings(ctx) -> None:
         )
 
 
+async def logfire_doc_embeddings(ctx) -> None:
+    """Update the embeddings for the logfire documentation."""
+    with logfire.span('update logfire docs embeddings'):
+        await update_docs_embeddings(
+            ctx['client'],
+            ctx['pg_pool'],
+            ctx['openai_client'],
+            'https://logfire.pydantic.dev/docs/llms.txt',
+            'logfire_docs',
+        )
+
+
 class WorkerSettings:
-    functions = [cloc, pydantic_ai_doc_embeddings]
+    functions = [cloc, pydantic_ai_doc_embeddings, logfire_doc_embeddings]
     on_startup = startup
     on_shutdown = shutdown
     redis_settings = RedisSettings.from_dsn(settings.redis_dsn)
-    cron_jobs = [cron(pydantic_ai_doc_embeddings, hour={10, 22}, minute=0)]
+    cron_jobs = [
+        cron(pydantic_ai_doc_embeddings, hour={10, 22}, minute=0),
+        cron(logfire_doc_embeddings, hour={1, 13}, minute=0),
+    ]
 
 
 def run():
