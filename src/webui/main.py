@@ -24,28 +24,8 @@ You can use the sections below to see how different tasks are recorded by Logfir
         c.Markdown(text=markdown),
         c.Div(
             components=[
-                c.Heading(text='Table and DB queries', level=2),
-                c.Link(
-                    components=[c.Text(text='View a table where data is fetched from the database.')],
-                    on_click=GoToEvent(url='/table'),
-                ),
-            ],
-            class_name='border-top mt-3 pt-1',
-        ),
-        c.Div(
-            components=[
                 c.Heading(text='LLM Query', level=2),
                 c.Link(components=[c.Text(text='Simple LLM question and answer.')], on_click=GoToEvent(url='/llm')),
-            ],
-            class_name='border-top mt-3 pt-1',
-        ),
-        c.Div(
-            components=[
-                c.Heading(text='Background Tasks', level=2),
-                c.Link(
-                    components=[c.Text(text='Use a worker to execute long running tasks.')],
-                    on_click=GoToEvent(url='/worker'),
-                ),
             ],
             class_name='border-top mt-3 pt-1',
         ),

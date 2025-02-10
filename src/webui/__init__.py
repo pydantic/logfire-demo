@@ -24,9 +24,7 @@ from ..common.db import Database
 from .llm import router as llm_router
 from .main import router as main_router
 from .settings import settings
-from .table import router as table_router
 from .web_hooks import router as web_hooks_router
-from .worker import router as worker_router
 
 os.environ.update(
     OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_REQUEST='.*',
@@ -63,9 +61,7 @@ else:
 logfire.instrument_fastapi(app)
 
 fastapi_auth_exception_handling(app)
-app.include_router(table_router, prefix='/api/table')
 app.include_router(llm_router, prefix='/api/llm')
-app.include_router(worker_router, prefix='/api/worker')
 app.include_router(main_router, prefix='/api')
 app.include_router(web_hooks_router, prefix='/webhooks')
 

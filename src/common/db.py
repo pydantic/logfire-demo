@@ -80,23 +80,6 @@ async def _prepare_db(dsn: str, create_database: bool) -> None:
 
 async def _create_schema(conn: Connection) -> None:
     await conn.execute("""
-CREATE TABLE IF NOT EXISTS cities (
-    id INT PRIMARY KEY,
-    city TEXT NOT NULL,
-    city_ascii TEXT NOT NULL,
-    lat NUMERIC NOT NULL,
-    lng NUMERIC NOT NULL,
-    country TEXT NOT NULL,
-    iso2 TEXT NOT NULL,
-    iso3 TEXT NOT NULL,
-    admin_name TEXT,
-    capital TEXT,
-    population INT NOT NULL
-);
-CREATE INDEX IF NOT EXISTS cities_country_idx ON cities (country);
-CREATE INDEX IF NOT EXISTS cities_iso3_idx ON cities (iso3);
-CREATE INDEX IF NOT EXISTS cities_population_idx ON cities (population desc);
-
 CREATE TABLE IF NOT EXISTS chats (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -113,12 +96,6 @@ CREATE TABLE IF NOT EXISTS messages (
 );
 CREATE INDEX IF NOT EXISTS messages_chat_id_idx ON messages (chat_id);
 CREATE INDEX IF NOT EXISTS messages_created_at_idx ON messages (created_at);
-
-CREATE TABLE IF NOT EXISTS repo_clocs (
-    repo TEXT PRIMARY KEY,
-    status TEXT NOT NULL,
-    counts JSONB
-);
 
 CREATE TABLE IF NOT EXISTS llm_results (
     questions_hash TEXT PRIMARY KEY,
@@ -140,6 +117,3 @@ CREATE TABLE IF NOT EXISTS embeddings (
     embedding VECTOR(1536)                -- For storing embeddings
 );
 """)
-    from .cities import create_cities
-
-    await create_cities(conn)
