@@ -63,16 +63,6 @@ services:
           type: redis
           name: arq-redis
           property: connectionString
-  - type: worker
-    name: spider
-    runtime: docker
-    rootDir: .
-    dockerfilePath: ./Dockerfile
-    envVars:
-      - key: SERVICE
-        value: spider
-      - key: LOGFIRE_TOKEN
-        sync: false
   - type: redis
     name: arq-redis
     plan: starter
