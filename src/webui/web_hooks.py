@@ -64,7 +64,8 @@ async def github_webhook(
             event_ts = datetime.fromisoformat(issue.get('created_at').replace('Z', '+00:00'))
             parent = None
         else:
-            return {'message': 'Event not supported'}
+            logfire.debug('Action not supported: {data}', data=data)
+            return {'message': 'Action not supported'}
     elif event_type == 'issue_comment':
         logfire.info('Received GitHub comment event: {data}', data=data)
         if data.get('action') == 'created':
@@ -80,7 +81,8 @@ async def github_webhook(
             event_ts = datetime.fromisoformat(comment.get('created_at').replace('Z', '+00:00'))
             parent = issue.get('html_url')
         else:
-            return {'message': 'Event not supported'}
+            logfire.debug('Action not supported: {data}', data=data)
+            return {'message': 'Action not supported'}
 
     if not author or not text or not external_reference:
         logfire.error('Invalid GitHub issue: {data}', data=data)
