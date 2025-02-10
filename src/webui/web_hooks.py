@@ -47,6 +47,7 @@ async def github_webhook(
     event_type = request.headers.get('X-GitHub-Event')  # GitHub event type
 
     if event_type not in ['issues', 'issue_comment']:
+        logfire.debug('Event not supported: {event_type}', event_type=event_type)
         return {'message': 'Event not supported'}
 
     if event_type == 'issues':
