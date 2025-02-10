@@ -8,7 +8,6 @@ from arq.connections import RedisSettings
 from arq.worker import run_worker
 from httpx import AsyncClient
 from openai import AsyncOpenAI
-from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
 
 from ..common import GeneralSettings
 from .docs_embeddings import update_docs_embeddings
@@ -16,17 +15,17 @@ from .docs_embeddings import update_docs_embeddings
 logfire.configure(service_name='worker')
 logfire.instrument_system_metrics()
 logfire.instrument_asyncpg()
+logfire.instrument_httpx(capture_all=True)
 
 
 settings = GeneralSettings()  # type: ignore
 
 
 async def startup(ctx):
-    client = AsyncClient()
-    HTTPXClientInstrumentor.instrument_client(client)
     openai_http_client = AsyncClient()
-    HTTPXClientInstrumentor.instrument_client(openai_http_client)
     openai_client = openai_client = AsyncOpenAI(http_client=openai_http_client)
+
+    client = AsyncClient()
     ctx.update(
         client=client,
         pg_pool=await asyncpg.create_pool(settings.pg_dsn),
