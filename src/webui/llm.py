@@ -22,6 +22,10 @@ from .shared import demo_page
 
 router = APIRouter()
 
+# This is a workaround for the compatibility issue with the new version of Pydantic
+# https://github.com/pydantic/FastUI/issues/369
+c.Link.model_rebuild()
+
 
 class PromptModel(BaseModel):
     prompt: str | None = Field(title='Prompt', description='Ask me (almost) anything', max_length=300)
