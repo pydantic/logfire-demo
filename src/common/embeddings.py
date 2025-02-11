@@ -3,8 +3,28 @@ from datetime import datetime
 from typing import Literal
 
 import logfire
+import tiktoken
 from asyncpg import Connection
 from openai import AsyncOpenAI
+
+TOKEN_LIMIT = 8192  # OpenAI embedding model token limit
+
+
+def count_tokens(text: str, model: str = 'text-embedding-ada-002') -> int:
+    """Counts the number of tokens in a given text using OpenAI's tiktoken."""
+    encoding = tiktoken.encoding_for_model(model)
+    return len(encoding.encode(text))
+
+
+def truncate_text_to_token_limit(text: str, model: str = 'text-embedding-ada-002', max_tokens: int = 8192) -> str:
+    """Truncate text to fit within the token limit for embeddings."""
+    encoding = tiktoken.encoding_for_model(model)
+    tokens = encoding.encode(text)  # Convert text to tokens
+
+    if len(tokens) > max_tokens:
+        tokens = tokens[:max_tokens]  # Truncate to max tokens
+
+    return encoding.decode(tokens)  # Convert tokens back to text
 
 
 async def generate_embedding(openai_client: AsyncOpenAI, text: str) -> list[float]:
