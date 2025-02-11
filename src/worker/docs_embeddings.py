@@ -2,12 +2,13 @@ import re
 
 import asyncpg
 import logfire
-import tiktoken
 from httpx import AsyncClient
 from openai import AsyncOpenAI
 
 from ..common.embeddings import (
+    TOKEN_LIMIT,
     EmbeddingsSource,
+    count_tokens,
     create_embeddings,
     delete_embeddings_by_hash,
     generate_embedding,
@@ -15,20 +16,12 @@ from ..common.embeddings import (
     hash_text,
 )
 
-TOKEN_LIMIT = 8192  # OpenAI embedding model token limit
-
 
 async def get_content(client: AsyncClient, url: str) -> str:
     with logfire.span('Reading from {url=}', url=url):
         r = await client.get(url)
         r.raise_for_status()
         return r.content.decode()
-
-
-def count_tokens(text: str, model: str = 'gpt-3.5-turbo') -> int:
-    """Counts the number of tokens in a given text using OpenAI's tiktoken."""
-    encoding = tiktoken.encoding_for_model(model)
-    return len(encoding.encode(text))
 
 
 def split_large_text(text: str, max_tokens: int = TOKEN_LIMIT) -> list[str]:

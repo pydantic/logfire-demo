@@ -2,14 +2,15 @@ import hashlib
 import hmac
 import json
 from datetime import UTC, datetime
-from typing import Annotated
+from typing import Annotated, Any
 
 import logfire
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from openai import AsyncOpenAI
 
 from ..common.db import Database
-from ..common.embeddings import create_embeddings, generate_embedding, hash_text
+from ..common.db.github import create_github_content, fetch_github_content, update_github_content
+from ..common.embeddings import create_embeddings, generate_embedding, hash_text, truncate_text_to_token_limit
 from .settings import settings
 
 router = APIRouter()
@@ -20,6 +21,24 @@ def _get_openai_client(request: Request) -> AsyncOpenAI:
 
 
 AsyncOpenAIClientDep = Annotated[AsyncOpenAI, Depends(_get_openai_client)]
+
+
+async def generate_github_content_embedding(openai_client: AsyncOpenAI, text: str) -> list[list[float]]:
+    """Generate an embedding for GitHub content."""
+    truncated_text = truncate_text_to_token_limit(text)
+    return await generate_embedding(openai_client, truncated_text)
+
+
+def extract_data(issue: dict[str, Any]) -> tuple[int, str, str, datetime]:
+    """Extract relevant information from a GitHub issue or comment."""
+    issue_id = issue.get('id')
+    title = issue.get('title')
+    text = issue.get('body')
+    if title:
+        text = f'{title}\n\n{text}'
+    external_reference = issue.get('html_url')
+    event_ts = datetime.fromisoformat(issue.get('created_at').replace('Z', '+00:00'))
+    return issue_id, text, external_reference, event_ts
 
 
 def verify_github_signature(secret: str, payload: bytes, signature: str) -> bool:
@@ -56,13 +75,15 @@ async def github_webhook(
             issue = data.get('issue')
             if not issue:
                 logfire.error('Invalid GitHub issue: {data}', data=data)
-                return {'message': 'Invalid issue'}
+                return {'message': 'Invalid GitHub issue'}
 
-            author = issue.get('user', {}).get('login')
-            text = issue.get('body')
-            external_reference = issue.get('html_url')
-            event_ts = datetime.fromisoformat(issue.get('created_at').replace('Z', '+00:00'))
-            parent = None
+            i_id, i_text, i_external_reference, event_ts = extract_data(issue)
+            project = data.get('repository', {}).get('name')
+            embeddings = await generate_github_content_embedding(openai_client, i_text)
+            async with db.acquire() as conn:
+                await create_github_content(
+                    conn, project, 'issue', i_id, i_external_reference, i_text, event_ts, embeddings
+                )
         else:
             logfire.debug('Action not supported: {data}', data=data)
             return {'message': 'Action not supported'}
@@ -71,38 +92,33 @@ async def github_webhook(
         if data.get('action') == 'created':
             issue = data.get('issue')
             comment = data.get('comment')
-            if not issue or not comment or 'pull_request' in issue:  # Ignore pull requests comments
-                logfire.error('Invalid GitHub comment: {data}', data=data)
-                return {'message': 'Invalid comment'}
+            if not issue or not comment:
+                logfire.error('Invalid GitHub issue comment: {data}', data=data)
+                return {'message': 'Invalid GitHub issue comment'}
 
-            author = comment.get('user', {}).get('login')
-            text = comment.get('body')
-            external_reference = comment.get('html_url')
-            event_ts = datetime.fromisoformat(comment.get('created_at').replace('Z', '+00:00'))
-            parent = issue.get('html_url')
+            if 'pull_request' in issue:  # Ignore pull requests comments
+                logfire.error('Ignoring comment on GitHub pull request: {data}', data=data)
+                return {'message': 'Ignoring comment on GitHub pull request'}
+
+            # Comment has to be added to the issue text
+            project = data.get('repository', {}).get('name')
+            i_id, _, i_external_reference, _ = extract_data(issue)
+            async with db.acquire() as conn:
+                saved_issue = await fetch_github_content(conn, project, 'issue', i_id)
+                if not saved_issue:
+                    logfire.error(
+                        'GitHub issue not found: {external_reference}', external_reference=i_external_reference
+                    )
+                    return {'message': 'GitHub issue not found'}
+
+                _, c_text, _, _ = extract_data(comment)
+                text = f'{saved_issue["text"]}\n\n{c_text}'
+                embeddings = await generate_github_content_embedding(openai_client, text)
+                await update_github_content(conn, project, 'issue', i_id, text, embeddings)
+            logfire.info('Updated GitHub issue: {external_reference}', external_reference=i_external_reference)
         else:
             logfire.debug('Action not supported: {data}', data=data)
             return {'message': 'Action not supported'}
-
-    if not author or not text or not external_reference:
-        logfire.error('Invalid GitHub issue: {data}', data=data)
-        return {'message': 'Invalid issue'}
-
-    embedding = await generate_embedding(openai_client, text)
-
-    async with db.acquire_trans() as conn:
-        await create_embeddings(
-            conn,
-            source='github_issue',
-            external_reference=external_reference,
-            text=text,
-            text_hash=hash_text(text),
-            author=author,
-            event_ts=event_ts,
-            embedding=embedding,
-            parent=parent,
-        )
-        logfire.info('Saved GitHub issue: {external_reference}', external_reference=external_reference)
 
     return {'message': 'Webhook received successfully!'}
 
