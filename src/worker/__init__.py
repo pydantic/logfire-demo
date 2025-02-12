@@ -17,7 +17,7 @@ from .docs_embeddings import update_docs_embeddings
 logfire.configure(service_name='worker')
 logfire.instrument_system_metrics()
 logfire.instrument_asyncpg()
-logfire.instrument_httpx(capture_all=True)
+logfire.instrument_openai()
 
 
 settings = GeneralSettings()  # type: ignore
