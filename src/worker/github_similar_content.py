@@ -5,21 +5,100 @@ import logfire
 from httpx import AsyncClient
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent
+from pydantic_ai.models import ModelSettings
 
 from ..common.db.github import GithubContentProject, fetch_issues_for_similarity_check, find_similar_issues
 
 
 class SimilarityResult(BaseModel):
     percentage: int = Field(description='Similarity of the issues', ge=0, le=100)
+    reason: str = Field(description='Reason for the similarity')
 
 
 similar_issue_agent = Agent(
     'openai:gpt-4o',
     result_type=SimilarityResult,
+    model_settings=ModelSettings(temprature=0.1),
     system_prompt=(
-        'I have two GitHub issues, and I want you to analyze their similarity.'
-        'Please provide a similarity score as a percentage (0% = completely different, 100% = identical).'
-        'Analyze their content, intent, and meaning. Provide a **single similarity percentage**'
+        """
+Your task is to provide a detailed similarity analysis while maintaining strict output format requirements.
+
+ANALYSIS CRITERIA:
+1. Semantic Similarity (40% weight)
+   - Core problem or feature request
+   - Technical domain and scope
+   - Expected behavior and outcomes
+
+2. Implementation Details (30% weight)
+   - Technical approach suggested
+   - Dependencies mentioned
+   - Code snippets or examples
+
+3. Context & Requirements (30% weight)
+   - Project context and constraints
+   - User impact and priorities
+   - Environment and version details
+
+SIMILARITY SCALE:
+0-20%: Fundamentally different issues
+21-40%: Slight overlaps but largely distinct
+41-60%: Moderate similarity in some aspects
+61-80%: Significant overlap in core aspects
+81-100%: Nearly identical issues
+
+RULES:
+- Ignore superficial similarities (writing style, formatting)
+- Consider partial matches in technical requirements
+- Account for implicit similarities in problem domain
+- Look for shared root causes in bug reports
+- Consider related feature requests as partial matches
+
+OUTPUT FORMAT:
+1. Provide a single integer similarity score (0-100)
+2. The score must be divisible by 5 (e.g., 75 not 77)
+3. No explanation unless explicitly requested
+
+EXAMPLE PAIRS AND SCORES:
+
+# High Similarity (80-100%)
+Issue 1: "Error: Connection timeout when processing large files >500MB"
+Issue 2: "Timeout occurred during batch processing of files >1GB"
+Score: 85
+Reason: Nearly identical core issue (timeout during large file processing), same technical domain, similar scope
+
+Issue 1: "Add dark mode support to dashboard UI"
+Issue 2: "Implement dark theme for main dashboard"
+Score: 90
+Reason: Same feature request, same component, identical scope
+
+# Moderate Similarity (40-79%)
+Issue 1: "Redis connection fails with timeout after 30 seconds"
+Issue 2: "MongoDB connection timeout in high-load scenarios"
+Score: 60
+Reason: Similar problem (database timeout) but different databases and contexts
+
+Issue 1: "Add user authentication via Google OAuth"
+Issue 2: "Implement SSO support for Google accounts"
+Score: 75
+Reason: Related authentication features with overlapping implementation
+
+# Low Similarity (0-39%)
+Issue 1: "Browser crashes when uploading large files"
+Issue 2: "Timeout during large file upload"
+Score: 35
+Reason: Different core issues (crash vs timeout) despite similar trigger
+
+Issue 1: "Add PDF export functionality"
+Issue 2: "Fix PDF rendering bug in preview"
+Score: 25
+Reason: Same component (PDF) but different types of issues (feature vs bug)
+
+# Zero Similarity
+Issue 1: "Update documentation for API endpoints"
+Issue 2: "Fix memory leak in image processing"
+Score: 0
+Reason: Completely different domains, types, and purposes
+"""
     ),
 )
 
@@ -60,12 +139,12 @@ async def _post_github_comment(
 
 async def suggest_similar_issues(pg_pool: asyncpg.Pool, similar_issue_agent: Agent, github_client: AsyncClient) -> None:
     async with pg_pool.acquire() as conn:
-        # Fetch new created issues for similarity check
+        # Fetch new issues for similarity check
         issues = await fetch_issues_for_similarity_check(conn)
         if not issues:
-            logfire.info('No new created issues found')
+            logfire.info('No new issues found')
             return
-        logfire.info(f'Found {len(issues)} new created issues')
+        logfire.info(f'Found {len(issues)} new issues')
 
         for issue in issues:
             issue_link = issue['external_reference']
