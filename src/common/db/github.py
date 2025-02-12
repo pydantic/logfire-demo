@@ -37,7 +37,7 @@ async def create_github_content(
     )
 
 
-async def fetch_github_content(
+async def get_github_content(
     conn: Connection,
     project: GithubContentProject,
     source: GithubContentSource,
@@ -74,4 +74,38 @@ async def update_github_content(
         project,
         source,
         content_id,
+    )
+
+
+async def fetch_issues_for_similarity_check(conn: Connection) -> list[dict[str, Any]]:
+    """Fetch GitHub issues for similarity check."""
+    return await conn.fetch(
+        """
+        SELECT
+            id,
+            project,
+            text,
+            external_reference
+        FROM github_contents
+        WHERE source='issue' AND similarity_checked = FALSE
+        """,
+    )
+
+
+async def find_similar_issues(conn: Connection, id: int, project: GithubContentProject) -> list[dict[str, Any]]:
+    """Find similar GitHub issues by vector similarity."""
+    return await conn.fetch(
+        """
+        SELECT
+            text,
+            external_reference,
+            embedding <=> (SELECT embedding FROM github_contents WHERE id = $1) AS distance
+        FROM github_contents
+        WHERE source='issue' AND project=$2 AND id != $3
+        ORDER BY distance DESC
+        LIMIT 3;
+        """,
+        id,
+        project,
+        id,
     )
