@@ -37,8 +37,10 @@ services:
         SERVICE: worker
         PG_DSN: postgres://postgres:postgres@postgres/logfire_demo
         REDIS_DSN: redis://redis:6379/0
-        GITHUB_TOKEN: $GITHUB_TOKEN
         LOGFIRE_TOKEN: $LOGFIRE_TOKEN
+        GITHUB_APP_ID: $GITHUB_APP_ID
+        GITHUB_APP_INSTALLATION_ID: $GITHUB_APP_INSTALLATION_ID
+        GITHUB_APP_PRIVATE_KEY: $GITHUB_APP_PRIVATE_KEY
     healthcheck:
       test: arq src.worker.WorkerSettings --check
 

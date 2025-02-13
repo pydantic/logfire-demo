@@ -1,11 +1,9 @@
 import asyncio
 import logging.config
 import time
-from typing import Annotated
 
 import asyncpg
 import logfire
-from annotated_types import MinLen
 from arq import cron
 from arq.connections import RedisSettings
 from arq.worker import run_worker
@@ -13,21 +11,14 @@ from httpx import AsyncClient
 from openai import AsyncOpenAI
 from pydantic_ai import Agent
 
-from ..common import GeneralSettings
 from .docs_embeddings import update_docs_embeddings
 from .github_similar_content import similar_issue_agent, suggest_similar_issues
+from .settings import settings
 
 logfire.configure(service_name='worker')
 logfire.instrument_system_metrics()
 logfire.instrument_asyncpg()
 logfire.instrument_openai()
-
-
-class Settings(GeneralSettings):
-    github_token: Annotated[str, MinLen(1)]
-
-
-settings = Settings()  # type: ignore
 
 
 async def startup(ctx):
@@ -40,9 +31,6 @@ async def startup(ctx):
         system_prompt='Be concise, reply with maximum 50 tokens.',
     )
 
-    headers = {'Accept': 'application/vnd.github.v3+json', 'Authorization': f'token {settings.github_token}'}
-    github_client = AsyncClient(headers=headers, follow_redirects=True)
-
     client = AsyncClient()
 
     ctx.update(
@@ -51,7 +39,6 @@ async def startup(ctx):
         openai_client=openai_client,
         ai_agent=ai_agent,
         similar_issue_agent=similar_issue_agent,
-        github_client=github_client,
     )
 
 
@@ -119,7 +106,7 @@ async def llm_query(ctx) -> None:
 async def check_new_created_issues(ctx) -> None:
     """Suggest similar issues for new issues and post them as comments."""
     with logfire.span('check new issues for similarity'):
-        await suggest_similar_issues(ctx['pg_pool'], ctx['similar_issue_agent'], ctx['github_client'])
+        await suggest_similar_issues(ctx['pg_pool'], ctx['similar_issue_agent'], ctx['client'])
 
 
 class WorkerSettings:
