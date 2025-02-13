@@ -7,7 +7,12 @@ from pydantic import BaseModel, Field
 from pydantic_ai import Agent
 from pydantic_ai.models import ModelSettings
 
-from ..common.db.github import GithubContentProject, fetch_issues_for_similarity_check, find_similar_issues
+from ..common.db.github import (
+    GithubContentProject,
+    fetch_issues_for_similarity_check,
+    find_similar_issues,
+    update_similar_issues,
+)
 
 
 class SimilarityResult(BaseModel):
@@ -124,11 +129,11 @@ async def _post_github_comment(
     # Generate the comment body
     issue_links = '\n'.join(
         [
-            f'{i + 1}. "{similar_issue["link"]}" ({similar_issue["percentage"]}% similar)'
+            f'{i + 1}. "{similar_issue["link"]}" ({similar_issue["ai_similarity"]}% similar)'
             for i, similar_issue in enumerate(similar_issues)
         ]
     )
-    body = f'PydanticAI Github Bot Found 3 issues similar to this one: \n{issue_links}'
+    body = f'PydanticAI Github Bot Found {len(similar_issues)} issues similar to this one: \n{issue_links}'
 
     response = await github_client.post(
         url,
@@ -153,31 +158,42 @@ async def suggest_similar_issues(pg_pool: asyncpg.Pool, similar_issue_agent: Age
                 similar_issues = await find_similar_issues(conn, issue['id'], issue['project'])
                 logfire.info(f'Found {len(similar_issues)} similar issues for issue {issue_link}')
 
-                final_similar_issues: list[dict[str, Any]] = []
+                similar_issues_obj: list[dict[str, Any]] = []
                 for similar_issue in similar_issues:
                     similar_issue_link = similar_issue['external_reference']
+                    distance = similar_issue['distance']
+                    obj = {
+                        'link': similar_issue_link,
+                        'distance': distance,
+                        'ai_similarity': None,
+                        'post_comment': False,
+                    }
                     # Skip similar issues with distance less than 90
                     # It could be done in database level, but we did it here to see some
                     # similar issues in logs. This help us to adjust the threshold
-                    if similar_issue['distance'] < 0.9:
+                    if distance >= 0.9:
+                        # Get similarity percentage from the AI agent
                         logfire.info(
-                            f'Skipping similar issue {similar_issue_link} due to distance {similar_issue["distance"]}'
+                            f'Checking similarity between issue {issue_link} and similar issue {similar_issue_link}'
                         )
-
-                    # Get similarity percentage from the AI agent
-                    logfire.info(
-                        f'Checking similarity between issue {issue_link} and similar issue {similar_issue_link}'
-                    )
-                    similarity_result = await similar_issue_agent.run(
-                        _generate_query(issue['text'], similar_issue['text'])
-                    )
-                    if similarity_result.data.percentage > 90:
-                        final_similar_issues.append(
-                            {'link': similar_issue_link, 'percentage': similarity_result.data.percentage}
+                        similarity_result = await similar_issue_agent.run(
+                            _generate_query(issue['text'], similar_issue['text'])
                         )
+                        obj['ai_similarity'] = similarity_result.data.percentage
+                        if similarity_result.data.percentage > 90:
+                            obj['post_comment'] = True
+                    else:
+                        logfire.info(f'Skipping similar issue {similar_issue_link} due to distance {distance}')
 
-                if not final_similar_issues:
+                    similar_issues_obj.append(obj)
+
+                # Filter similar issues to post comments
+                issues_to_comment = [issue for issue in similar_issues_obj if issue['post_comment']]
+                if not issues_to_comment:
                     logfire.info(f'No similar issues found for {issue_link}')
-                    continue
+                else:
+                    await _post_github_comment(github_client, issue['project'], issue_link, issues_to_comment)
+                    logfire.info(f'Posted similar issues for {issue_link}')
 
-                await _post_github_comment(github_client, issue['project'], issue_link, final_similar_issues)
+                # Update the similar issues in the database
+                await update_similar_issues(conn, issue['id'], similar_issues_obj)

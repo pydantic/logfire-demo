@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from typing import Any, Literal
 
@@ -87,7 +88,7 @@ async def fetch_issues_for_similarity_check(conn: Connection) -> list[dict[str, 
             text,
             external_reference
         FROM github_contents
-        WHERE source='issue' AND similarity_checked = FALSE
+        WHERE source='issue' AND similar_issues IS NULL
         """,
     )
 
@@ -107,5 +108,15 @@ async def find_similar_issues(conn: Connection, id: int, project: GithubContentP
         """,
         id,
         project,
+        id,
+    )
+
+
+async def update_similar_issues(conn: Connection, id: int, similar_issues_obj: list[dict[str, Any]]) -> None:
+    await conn.execute(
+        """
+        UPDATE github_contents SET similar_issues=$1 WHERE id=$2
+        """,
+        json.dumps(similar_issues_obj),
         id,
     )

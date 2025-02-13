@@ -129,7 +129,7 @@ CREATE TABLE IF NOT EXISTS github_contents (
     created_at TIMESTAMPTZ DEFAULT NOW(),      -- Timestamp of when the entry was created
     updated_at TIMESTAMPTZ DEFAULT NOW(),      -- Timestamp of when the entry was last updated
     embedding VECTOR(1536),                    -- For storing embeddings
-    similarity_checked BOOLEAN DEFAULT FALSE,  -- Whether the content has been checked for similarity
+    similar_issues JSONB,                      -- Similar issues
     unique (project, source, content_id)       -- Unique constraint
 );
 """)
