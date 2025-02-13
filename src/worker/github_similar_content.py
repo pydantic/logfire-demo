@@ -1,6 +1,8 @@
+import time
 from typing import Any
 
 import asyncpg
+import jwt
 import logfire
 from httpx import AsyncClient
 from pydantic import BaseModel, Field
@@ -13,6 +15,7 @@ from ..common.db.github import (
     find_similar_issues,
     update_similar_issues,
 )
+from .settings import settings
 
 
 class SimilarityResult(BaseModel):
@@ -119,8 +122,28 @@ def _generate_query(issue_1_text: str, issue_2_text: str) -> str:
     """
 
 
+async def _generate_github_app_access_token(
+    client: AsyncClient, app_id: int, installation_id: int, private_key: str
+) -> str:
+    """Generate a GitHub App access token."""
+    # Generate a GitHub App JWT
+    now = int(time.time())
+    payload = {'iat': now, 'exp': now + 600, 'iss': app_id}
+    jwt_token = jwt.encode(payload, private_key, algorithm='RS256')
+
+    # Get Installation Access Token
+    url = f'https://api.github.com/app/installations/{installation_id}/access_tokens'
+    headers = {'Authorization': f'Bearer {jwt_token}', 'Accept': 'application/vnd.github.v3+json'}
+    response = await client.post(url, headers=headers)
+    return response.json().get('token')
+
+
 async def _post_github_comment(
-    github_client: AsyncClient, project: GithubContentProject, issue_link: str, similar_issues: list[dict[str, Any]]
+    client: AsyncClient,
+    access_token: str,
+    project: GithubContentProject,
+    issue_link: str,
+    similar_issues: list[dict[str, Any]],
 ) -> None:
     # Find the issue number from the issue link
     issue_number = issue_link.split('/')[-1]
@@ -135,14 +158,17 @@ async def _post_github_comment(
     )
     body = f'PydanticAI Github Bot Found {len(similar_issues)} issues similar to this one: \n{issue_links}'
 
-    response = await github_client.post(
+    response = await client.post(
         url,
         json={'body': body},
+        headers={'Authorization': f'Bearer {access_token}', 'Accept': 'application/vnd.github.v3+json'},
     )
     response.raise_for_status()
 
 
-async def suggest_similar_issues(pg_pool: asyncpg.Pool, similar_issue_agent: Agent, github_client: AsyncClient) -> None:
+async def suggest_similar_issues(pg_pool: asyncpg.Pool, similar_issue_agent: Agent, client: AsyncClient) -> None:
+    github_access_token = None
+
     async with pg_pool.acquire() as conn:
         # Fetch new issues for similarity check
         issues = await fetch_issues_for_similarity_check(conn)
@@ -192,7 +218,19 @@ async def suggest_similar_issues(pg_pool: asyncpg.Pool, similar_issue_agent: Age
                 if not issues_to_comment:
                     logfire.info(f'No similar issues found for {issue_link}')
                 else:
-                    await _post_github_comment(github_client, issue['project'], issue_link, issues_to_comment)
+                    # Github access token is valid for 10 minutes. We need to generate a new one
+                    # if we don't have it. As the task runs every 10 minutes, we need to generate
+                    # a new token every time the task runs.
+                    if not github_access_token:
+                        github_access_token = await _generate_github_app_access_token(
+                            client,
+                            settings.github_app_id,
+                            settings.github_app_installation_id,
+                            settings.github_app_private_key,
+                        )
+                    await _post_github_comment(
+                        client, github_access_token, issue['project'], issue_link, issues_to_comment
+                    )
                     logfire.info(f'Posted similar issues for {issue_link}')
 
                 # Update the similar issues in the database
