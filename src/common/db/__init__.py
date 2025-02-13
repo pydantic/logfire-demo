@@ -118,17 +118,18 @@ CREATE TABLE IF NOT EXISTS embeddings (
 );
 
 CREATE TABLE IF NOT EXISTS github_contents (
-    id SERIAL PRIMARY KEY,                -- Unique ID for each entry
-    project TEXT NOT NULL,                -- "pydantic", "logfire"
-    source TEXT NOT NULL,                 -- "issue"
-    content_id BIGINT NOT NULL,           -- GitHub content ID
-    external_reference TEXT NOT NULL,     -- GitHub link
-    text TEXT NOT NULL,                   -- The actual text content
-    hash TEXT UNIQUE NOT NULL,            -- Hash of the text content
-    event_ts TIMESTAMPTZ DEFAULT NOW(),   -- Timestamp of when the event occurred
-    created_at TIMESTAMPTZ DEFAULT NOW(), -- Timestamp of when the entry was created
-    updated_at TIMESTAMPTZ DEFAULT NOW(), -- Timestamp of when the entry was last updated
-    embedding VECTOR(1536),               -- For storing embeddings
-    unique (project, source, content_id)  -- Unique constraint
+    id SERIAL PRIMARY KEY,                     -- Unique ID for each entry
+    project TEXT NOT NULL,                     -- "pydantic", "logfire"
+    source TEXT NOT NULL,                      -- "issue"
+    content_id BIGINT NOT NULL,                -- GitHub content ID
+    external_reference TEXT NOT NULL,          -- GitHub link
+    text TEXT NOT NULL,                        -- The actual text content
+    hash TEXT UNIQUE NOT NULL,                 -- Hash of the text content
+    event_ts TIMESTAMPTZ DEFAULT NOW(),        -- Timestamp of when the event occurred
+    created_at TIMESTAMPTZ DEFAULT NOW(),      -- Timestamp of when the entry was created
+    updated_at TIMESTAMPTZ DEFAULT NOW(),      -- Timestamp of when the entry was last updated
+    embedding VECTOR(1536),                    -- For storing embeddings
+    similar_issues JSONB,                      -- Similar issues
+    unique (project, source, content_id)       -- Unique constraint
 );
 """)

@@ -1,9 +1,11 @@
 import asyncio
 import logging.config
 import time
+from typing import Annotated
 
 import asyncpg
 import logfire
+from annotated_types import MinLen
 from arq import cron
 from arq.connections import RedisSettings
 from arq.worker import run_worker
@@ -13,6 +15,7 @@ from pydantic_ai import Agent
 
 from ..common import GeneralSettings
 from .docs_embeddings import update_docs_embeddings
+from .github_similar_content import similar_issue_agent, suggest_similar_issues
 
 logfire.configure(service_name='worker')
 logfire.instrument_system_metrics()
@@ -20,7 +23,11 @@ logfire.instrument_asyncpg()
 logfire.instrument_openai()
 
 
-settings = GeneralSettings()  # type: ignore
+class Settings(GeneralSettings):
+    github_token: Annotated[str, MinLen(1)]
+
+
+settings = Settings()  # type: ignore
 
 
 async def startup(ctx):
@@ -33,12 +40,18 @@ async def startup(ctx):
         system_prompt='Be concise, reply with maximum 50 tokens.',
     )
 
+    headers = {'Accept': 'application/vnd.github.v3+json', 'Authorization': f'token {settings.github_token}'}
+    github_client = AsyncClient(headers=headers, follow_redirects=True)
+
     client = AsyncClient()
+
     ctx.update(
         client=client,
         pg_pool=await asyncpg.create_pool(settings.pg_dsn),
         openai_client=openai_client,
         ai_agent=ai_agent,
+        similar_issue_agent=similar_issue_agent,
+        github_client=github_client,
     )
 
 
@@ -103,8 +116,20 @@ async def llm_query(ctx) -> None:
         logfire.info('Question: {question} Answer: {response}', question=question, response=response.data)
 
 
+async def check_new_created_issues(ctx) -> None:
+    """Suggest similar issues for new issues and post them as comments."""
+    with logfire.span('check new issues for similarity'):
+        await suggest_similar_issues(ctx['pg_pool'], ctx['similar_issue_agent'], ctx['github_client'])
+
+
 class WorkerSettings:
-    functions = [pydantic_doc_embeddings, pydantic_ai_doc_embeddings, logfire_doc_embeddings, llm_query]
+    functions = [
+        pydantic_doc_embeddings,
+        pydantic_ai_doc_embeddings,
+        logfire_doc_embeddings,
+        llm_query,
+        check_new_created_issues,
+    ]
     on_startup = startup
     on_shutdown = shutdown
     redis_settings = RedisSettings.from_dsn(settings.redis_dsn)
@@ -113,6 +138,7 @@ class WorkerSettings:
         cron(logfire_doc_embeddings, hour={1, 13}, minute=0),
         cron(pydantic_doc_embeddings, hour={2, 14}, minute=0),
         cron(llm_query, minute={0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55}),
+        cron(check_new_created_issues, minute={0, 10, 20, 30, 40, 50}),
     ]
 
 

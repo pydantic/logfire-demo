@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from openai import AsyncOpenAI
 
 from ..common.db import Database
-from ..common.db.github import create_github_content, fetch_github_content, update_github_content
+from ..common.db.github import create_github_content, get_github_content, update_github_content
 from ..common.embeddings import create_embeddings, generate_embedding, hash_text, truncate_text_to_token_limit
 from .settings import settings
 
@@ -104,7 +104,7 @@ async def github_webhook(
             project = data.get('repository', {}).get('name')
             i_id, _, i_external_reference, _ = extract_data(issue)
             async with db.acquire() as conn:
-                saved_issue = await fetch_github_content(conn, project, 'issue', i_id)
+                saved_issue = await get_github_content(conn, project, 'issue', i_id)
                 if not saved_issue:
                     logfire.error(
                         'GitHub issue not found: {external_reference}', external_reference=i_external_reference

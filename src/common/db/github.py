@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from typing import Any, Literal
 
@@ -37,7 +38,7 @@ async def create_github_content(
     )
 
 
-async def fetch_github_content(
+async def get_github_content(
     conn: Connection,
     project: GithubContentProject,
     source: GithubContentSource,
@@ -74,4 +75,48 @@ async def update_github_content(
         project,
         source,
         content_id,
+    )
+
+
+async def fetch_issues_for_similarity_check(conn: Connection) -> list[dict[str, Any]]:
+    """Fetch GitHub issues for similarity check."""
+    return await conn.fetch(
+        """
+        SELECT
+            id,
+            project,
+            text,
+            external_reference
+        FROM github_contents
+        WHERE source='issue' AND similar_issues IS NULL
+        """,
+    )
+
+
+async def find_similar_issues(conn: Connection, id: int, project: GithubContentProject) -> list[dict[str, Any]]:
+    """Find similar GitHub issues by vector similarity."""
+    return await conn.fetch(
+        """
+        SELECT
+            text,
+            external_reference,
+            embedding <=> (SELECT embedding FROM github_contents WHERE id = $1) AS distance
+        FROM github_contents
+        WHERE source='issue' AND project=$2 AND id != $3
+        ORDER BY distance DESC
+        LIMIT 3;
+        """,
+        id,
+        project,
+        id,
+    )
+
+
+async def update_similar_issues(conn: Connection, id: int, similar_issues_obj: list[dict[str, Any]]) -> None:
+    await conn.execute(
+        """
+        UPDATE github_contents SET similar_issues=$1 WHERE id=$2
+        """,
+        json.dumps(similar_issues_obj),
+        id,
     )
