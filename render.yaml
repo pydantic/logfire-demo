@@ -50,8 +50,6 @@ services:
         value: worker
       - key: LOGFIRE_TOKEN
         sync: false
-      - key: GITHUB_TOKEN
-        sync: false
       - key: OPENAI_API_KEY
         sync: false
       - key: PG_DSN
@@ -63,6 +61,16 @@ services:
           type: redis
           name: arq-redis
           property: connectionString
+      - key: GITHUB_APP_ID
+        sync: false
+      - key: GITHUB_APP_INSTALLATION_ID
+        sync: false
+      - key: GITHUB_APP_PRIVATE_KEY
+        sync: false
+      - key: VECTOR_DISTANCE_THRESHOLD
+        sync: false
+      - key: AI_SIMILARITY_THRESHOLD
+        sync: false
   - type: redis
     name: arq-redis
     plan: starter

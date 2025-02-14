@@ -106,7 +106,13 @@ async def llm_query(ctx) -> None:
 async def check_new_created_issues(ctx) -> None:
     """Suggest similar issues for new issues and post them as comments."""
     with logfire.span('check new issues for similarity'):
-        await suggest_similar_issues(ctx['pg_pool'], ctx['similar_issue_agent'], ctx['client'])
+        await suggest_similar_issues(
+            ctx['pg_pool'],
+            ctx['similar_issue_agent'],
+            ctx['client'],
+            settings.vector_distance_threshold,
+            settings.ai_similarity_threshold,
+        )
 
 
 class WorkerSettings:
