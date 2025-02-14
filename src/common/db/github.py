@@ -103,7 +103,7 @@ async def find_similar_issues(conn: Connection, id: int, project: GithubContentP
             embedding <=> (SELECT embedding FROM github_contents WHERE id = $1) AS distance
         FROM github_contents
         WHERE source='issue' AND project=$2 AND id != $3
-        ORDER BY distance DESC
+        ORDER BY distance
         LIMIT 3;
         """,
         id,

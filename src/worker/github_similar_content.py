@@ -194,10 +194,10 @@ async def suggest_similar_issues(pg_pool: asyncpg.Pool, similar_issue_agent: Age
                         'ai_similarity': None,
                         'post_comment': False,
                     }
-                    # Skip similar issues with distance less than 90
+                    # Skip similar issues with distance > 0.1
                     # It could be done in database level, but we did it here to see some
                     # similar issues in logs. This help us to adjust the threshold
-                    if distance >= 0.9:
+                    if distance <= 0.1:
                         # Get similarity percentage from the AI agent
                         logfire.info(
                             f'Checking similarity between issue {issue_link} and similar issue {similar_issue_link}'
