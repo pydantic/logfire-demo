@@ -15,15 +15,10 @@ from .docs_embeddings import update_docs_embeddings
 from .github_similar_content import similar_issue_agent, suggest_similar_issues
 from .settings import settings
 
-logfire.configure(service_name='worker')
-logfire.instrument_system_metrics()
-logfire.instrument_asyncpg()
-logfire.instrument_openai()
-
 
 async def startup(ctx):
     openai_http_client = AsyncClient()
-    openai_client = openai_client = AsyncOpenAI(http_client=openai_http_client)
+    openai_client = AsyncOpenAI(http_client=openai_http_client)
 
     ai_agent = Agent(
         'openai:gpt-4o',
