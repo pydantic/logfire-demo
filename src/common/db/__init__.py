@@ -132,4 +132,18 @@ CREATE TABLE IF NOT EXISTS github_contents (
     similar_issues JSONB,                      -- Similar issues
     unique (project, source, content_id)       -- Unique constraint
 );
+
+CREATE TABLE IF NOT EXISTS slack_messages (
+    id SERIAL PRIMARY KEY,                     -- Unique ID for each entry
+    channel TEXT NOT NULL,                     -- Slack channel
+    author TEXT NOT NULL,                      -- Message author
+    message_id TEXT NOT NULL,                  -- Slack message ID
+    event_ts TEXT NOT NULL,                    -- Timestamp of when the event occurred (text)
+    parent_event_ts TEXT,                      -- Slack message thread timestamp
+    text TEXT NOT NULL,                        -- The actual text content
+    hash TEXT UNIQUE NOT NULL,                 -- Hash of the text content
+    ts TIMESTAMPTZ,                            -- Message timestamp
+    created_at TIMESTAMPTZ DEFAULT NOW(),      -- Timestamp of when the entry was created
+    embedding VECTOR(1536)                     -- For storing embeddings
+);
 """)

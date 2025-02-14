@@ -10,7 +10,8 @@ from openai import AsyncOpenAI
 
 from ..common.db import Database
 from ..common.db.github import create_github_content, get_github_content, update_github_content
-from ..common.embeddings import create_embeddings, generate_embedding, hash_text, truncate_text_to_token_limit
+from ..common.db.slack import create_slack_message
+from ..common.embeddings import generate_embedding, truncate_text_to_token_limit
 from .settings import settings
 
 router = APIRouter()
@@ -158,37 +159,36 @@ async def slack_events(request: Request, db: Database, openai_client: AsyncOpenA
         logfire.info('Received Slack event: {event}', event=event)
 
         # Only process messages from allowed channels
-        if event.get('channel') not in settings.slack_channel_ids:
-            logfire.error('Invalid Slack channel: {channel}', channel=event.get('channel'))
-            return {'message': 'Invalid channel'}
+        if (channel := event.get('channel')) not in settings.slack_channel_ids:
+            logfire.error('Invalid Slack channel: {channel}', channel=channel)
+            return {'message': 'Invalid Slack channel'}
 
         if event.get('type') == 'message' and event.get('subtype') is None:
             author = event.get('user')
             text = event.get('text')
-            external_reference = event.get('client_msg_id')
-            event_ts = datetime.fromtimestamp(float(event.get('event_ts')), tz=UTC)
-            if not author or not text or not external_reference:
+            message_id = event.get('client_msg_id')
+            ts = datetime.fromtimestamp(float(event.get('ts')), tz=UTC)
+            event_ts = event.get('event_ts')
+            parent_event_ts = event.get('thread_ts')
+            if not author or not text or not message_id or not event_ts:
                 logfire.error('Invalid Slack message: {event}', event=event)
-                return {'message': 'Invalid event'}
-            parent = None
-            if thread_ts := event.get('thread_ts'):
-                parent = datetime.fromtimestamp(float(thread_ts), tz=UTC).isoformat()
+                return {'message': 'Invalid Slack message'}
 
             embedding = await generate_embedding(openai_client, text)
 
             async with db.acquire_trans() as conn:
-                await create_embeddings(
+                await create_slack_message(
                     conn,
-                    source='slack_message',
-                    external_reference=external_reference,
-                    text=text,
-                    text_hash=hash_text(text),
+                    channel=channel,
                     author=author,
+                    message_id=message_id,
                     event_ts=event_ts,
+                    parent_event_ts=parent_event_ts,
+                    text=text,
+                    ts=ts,
                     embedding=embedding,
-                    parent=parent,
                 )
 
-            logfire.info('Saved Slack message: {external_reference}', external_reference=external_reference)
+            logfire.info('Saved Slack message: {message_id}', message_id=message_id)
 
     return {'message': 'Event received'}
