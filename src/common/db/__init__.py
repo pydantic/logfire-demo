@@ -124,7 +124,6 @@ CREATE TABLE IF NOT EXISTS github_contents (
     content_id BIGINT NOT NULL,                -- GitHub content ID
     external_reference TEXT NOT NULL,          -- GitHub link
     text TEXT NOT NULL,                        -- The actual text content
-    hash TEXT UNIQUE NOT NULL,                 -- Hash of the text content
     event_ts TIMESTAMPTZ DEFAULT NOW(),        -- Timestamp of when the event occurred
     created_at TIMESTAMPTZ DEFAULT NOW(),      -- Timestamp of when the entry was created
     updated_at TIMESTAMPTZ DEFAULT NOW(),      -- Timestamp of when the entry was last updated
@@ -141,7 +140,6 @@ CREATE TABLE IF NOT EXISTS slack_messages (
     event_ts TEXT NOT NULL,                    -- Timestamp of when the event occurred (text)
     parent_event_ts TEXT,                      -- Slack message thread timestamp
     text TEXT NOT NULL,                        -- The actual text content
-    hash TEXT UNIQUE NOT NULL,                 -- Hash of the text content
     ts TIMESTAMPTZ,                            -- Message timestamp
     created_at TIMESTAMPTZ DEFAULT NOW(),      -- Timestamp of when the entry was created
     embedding VECTOR(1536)                     -- For storing embeddings

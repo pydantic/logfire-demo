@@ -2,8 +2,6 @@ from datetime import datetime
 
 from asyncpg import Connection
 
-from ..embeddings import hash_text
-
 
 async def create_slack_message(
     conn: Connection,
@@ -20,7 +18,7 @@ async def create_slack_message(
     embedding_str = '[' + ','.join(map(str, embedding)) + ']'
     await conn.execute(
         """
-        INSERT INTO slack_messages (channel, author, message_id, event_ts, parent_event_ts, text, hash, ts, embedding)
+        INSERT INTO slack_messages (channel, author, message_id, event_ts, parent_event_ts, text, ts, embedding)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         """,
         channel,
@@ -29,7 +27,6 @@ async def create_slack_message(
         event_ts,
         parent_event_ts,
         text,
-        hash_text(text),
         ts,
         embedding_str,
     )
