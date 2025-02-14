@@ -41,6 +41,8 @@ services:
         GITHUB_APP_ID: $GITHUB_APP_ID
         GITHUB_APP_INSTALLATION_ID: $GITHUB_APP_INSTALLATION_ID
         GITHUB_APP_PRIVATE_KEY: $GITHUB_APP_PRIVATE_KEY
+        VECTOR_DISTANCE_THRESHOLD: 0.4
+        AI_SIMILARITY_THRESHOLD: 85
     healthcheck:
       test: arq src.worker.WorkerSettings --check
 

@@ -166,7 +166,13 @@ async def _post_github_comment(
     response.raise_for_status()
 
 
-async def suggest_similar_issues(pg_pool: asyncpg.Pool, similar_issue_agent: Agent, client: AsyncClient) -> None:
+async def suggest_similar_issues(
+    pg_pool: asyncpg.Pool,
+    similar_issue_agent: Agent,
+    client: AsyncClient,
+    vector_distance_threshold: float,
+    ai_similarity_threshold: int,
+) -> None:
     github_access_token = None
 
     async with pg_pool.acquire() as conn:
@@ -194,10 +200,10 @@ async def suggest_similar_issues(pg_pool: asyncpg.Pool, similar_issue_agent: Age
                         'ai_similarity': None,
                         'post_comment': False,
                     }
-                    # Skip similar issues with distance > 0.1
+                    # Skip similar issues with distance > vector_distance_threshold
                     # It could be done in database level, but we did it here to see some
                     # similar issues in logs. This help us to adjust the threshold
-                    if distance <= 0.1:
+                    if distance <= vector_distance_threshold:
                         # Get similarity percentage from the AI agent
                         logfire.info(
                             f'Checking similarity between issue {issue_link} and similar issue {similar_issue_link}'
@@ -206,7 +212,7 @@ async def suggest_similar_issues(pg_pool: asyncpg.Pool, similar_issue_agent: Age
                             _generate_query(issue['text'], similar_issue['text'])
                         )
                         obj['ai_similarity'] = similarity_result.data.percentage
-                        if similarity_result.data.percentage > 90:
+                        if similarity_result.data.percentage > ai_similarity_threshold:
                             obj['post_comment'] = True
                     else:
                         logfire.info(f'Skipping similar issue {similar_issue_link} due to distance {distance}')
