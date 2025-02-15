@@ -24,6 +24,7 @@ from ..common.db import Database
 from .llm import router as llm_router
 from .main import router as main_router
 from .settings import settings
+from .slack import router as slack_router
 from .web_hooks import router as web_hooks_router
 
 os.environ.update(
@@ -64,6 +65,7 @@ fastapi_auth_exception_handling(app)
 app.include_router(llm_router, prefix='/api/llm')
 app.include_router(main_router, prefix='/api')
 app.include_router(web_hooks_router, prefix='/webhooks')
+app.include_router(slack_router, prefix='/slack')
 
 
 @app.get('/robots.txt', response_class=PlainTextResponse)

@@ -13,6 +13,7 @@ dependencies = [
     "fastapi>=0.115.0",
     "fastui>=0.7.0",
     "httpx>=0.27.2",
+    "jinja2>=3.1.5",
     "logfire[asyncpg,fastapi,httpx,system-metrics]>=0.53.0",
     "openai>=1.47.1",
     "pillow>=10.4.0",
