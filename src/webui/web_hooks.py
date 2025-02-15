@@ -71,11 +71,11 @@ async def github_webhook(
         return {'message': 'Event not supported'}
 
     if event_type == 'issues':
-        logfire.info('Received GitHub issue event: {data}', data=data)
+        logfire.info('Received GitHub issue event: {gh_data}', gh_data=data)
         if data.get('action') == 'opened':
             issue = data.get('issue')
             if not issue:
-                logfire.error('Invalid GitHub issue: {data}', data=data)
+                logfire.error('Invalid GitHub issue: {gh_data}', gh_data=data)
                 return {'message': 'Invalid GitHub issue'}
 
             i_id, i_text, i_external_reference, event_ts = extract_data(issue)
@@ -86,19 +86,19 @@ async def github_webhook(
                     conn, project, 'issue', i_id, i_external_reference, i_text, event_ts, embeddings
                 )
         else:
-            logfire.debug('Action not supported: {data}', data=data)
+            logfire.debug('Action not supported: {gh_data}', gh_data=data)
             return {'message': 'Action not supported'}
     elif event_type == 'issue_comment':
-        logfire.info('Received GitHub comment event: {data}', data=data)
+        logfire.info('Received GitHub comment event: {gh_data}', gh_data=data)
         if data.get('action') == 'created':
             issue = data.get('issue')
             comment = data.get('comment')
             if not issue or not comment:
-                logfire.error('Invalid GitHub issue comment: {data}', data=data)
+                logfire.error('Invalid GitHub issue comment: {gh_data}', gh_data=data)
                 return {'message': 'Invalid GitHub issue comment'}
 
             if 'pull_request' in issue:  # Ignore pull requests comments
-                logfire.error('Ignoring comment on GitHub pull request: {data}', data=data)
+                logfire.error('Ignoring comment on GitHub pull request: {gh_data}', gh_data=data)
                 return {'message': 'Ignoring comment on GitHub pull request'}
 
             # Comment has to be added to the issue text
@@ -118,7 +118,7 @@ async def github_webhook(
                 await update_github_content(conn, project, 'issue', i_id, text, embeddings)
             logfire.info('Updated GitHub issue: {external_reference}', external_reference=i_external_reference)
         else:
-            logfire.debug('Action not supported: {data}', data=data)
+            logfire.debug('Action not supported: {gh_data}', gh_data=data)
             return {'message': 'Action not supported'}
 
     return {'message': 'Webhook received successfully!'}

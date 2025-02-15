@@ -1,6 +1,5 @@
 from __future__ import annotations as _annotations
 
-import os
 from contextlib import AsyncExitStack, asynccontextmanager
 from typing import Annotated
 
@@ -14,13 +13,6 @@ from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
 from ..common import AsyncClientDep
 from .build_map import BuildMap
 
-os.environ.update(
-    OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_REQUEST='.*',
-    OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_RESPONSE='.*',
-)
-logfire.configure(service_name='tiling')
-logfire.instrument_system_metrics()
-
 
 @asynccontextmanager
 async def lifespan(app_: FastAPI):
@@ -31,7 +23,7 @@ async def lifespan(app_: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
-logfire.instrument_fastapi(app)
+logfire.instrument_fastapi(app, capture_headers=True)
 
 
 @app.get('/', response_class=PlainTextResponse)
