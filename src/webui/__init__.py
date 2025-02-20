@@ -1,6 +1,5 @@
 from __future__ import annotations as _annotations
 
-import os
 import sys
 from contextlib import AsyncExitStack, asynccontextmanager
 from typing import Annotated
@@ -27,14 +26,6 @@ from .settings import settings
 from .slack import router as slack_router
 from .web_hooks import router as web_hooks_router
 
-os.environ.update(
-    OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_REQUEST='.*',
-    OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_RESPONSE='.*',
-)
-logfire.configure(service_name='webui')
-logfire.instrument_system_metrics()
-logfire.instrument_asyncpg()
-
 
 @asynccontextmanager
 async def lifespan(app_: FastAPI):
@@ -59,7 +50,7 @@ if frontend_reload:
 else:
     app = FastAPI(lifespan=lifespan)
 
-logfire.instrument_fastapi(app)
+logfire.instrument_fastapi(app, capture_headers=True)
 
 fastapi_auth_exception_handling(app)
 app.include_router(llm_router, prefix='/api/llm')
