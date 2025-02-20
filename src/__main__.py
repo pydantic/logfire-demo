@@ -12,8 +12,6 @@ if service is None:
     print('service argument variable not provided', file=sys.stderr)
     print('Available services:', ', '.join(services), file=sys.stderr)
 elif service in services:
-    module = importlib.import_module(f'.{service}', package='src')
-    module.run()
 
     def scrubbing_callback(match: logfire.ScrubMatch):
         if (
@@ -48,6 +46,8 @@ elif service in services:
     logfire.instrument_asyncpg()
     logfire.instrument_openai()
 
+    module = importlib.import_module(f'.{service}', package='src')
+    module.run()
 else:
     print(f'Unknown service: {service}', file=sys.stderr)
     print('Available services:', ', '.join(services), file=sys.stderr)
