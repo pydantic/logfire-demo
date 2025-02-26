@@ -14,3 +14,4 @@ wheels/
 .env
 .idea
 src/analytics/output
+service_account.json
