@@ -11,3 +11,6 @@ wheels/
 
 # misc space for stuff not in VCS
 /scratch/
+.env
+.idea
+src/analytics/output
