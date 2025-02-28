@@ -2,7 +2,7 @@ from __future__ import annotations as _annotations
 
 import sys
 from contextlib import AsyncExitStack, asynccontextmanager
-from typing import Annotated
+from typing import Annotated, Any
 
 import arq
 import logfire
@@ -89,7 +89,7 @@ async def map_jpg(
     height: Annotated[int, Ge(60), Le(1000)] = 400,
     scale: Annotated[int, Ge(1), Le(2)] = 1,
 ) -> StreamingResponse:
-    params = {'lat': lat, 'lng': lng, 'zoom': zoom, 'width': width, 'height': height, 'scale': scale}
+    params: dict[str, Any] = {'lat': lat, 'lng': lng, 'zoom': zoom, 'width': width, 'height': height, 'scale': scale}
     r = await http_client.get(f'{settings.tiling_server}/map.jpg', params=params)
     return StreamingResponse(r.aiter_bytes(), media_type='image/jpeg')
 

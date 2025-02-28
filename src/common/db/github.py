@@ -9,7 +9,7 @@ GithubContentSource = Literal['issue']
 
 
 async def create_github_content(
-    conn: Connection,
+    conn: Connection[Any],
     project: GithubContentProject,
     source: GithubContentSource,
     content_id: str,
@@ -36,11 +36,11 @@ async def create_github_content(
 
 
 async def get_github_content(
-    conn: Connection,
+    conn: Connection[Any],
     project: GithubContentProject,
     source: GithubContentSource,
     content_id: int,
-) -> dict[str, Any]:
+) -> dict[str, Any] | None:
     """Fetch GitHub content from the database by ID."""
     return await conn.fetchrow(
         """
@@ -53,7 +53,7 @@ async def get_github_content(
 
 
 async def update_github_content(
-    conn: Connection,
+    conn: Connection[Any],
     project: GithubContentProject,
     source: GithubContentSource,
     content_id: int,
@@ -74,7 +74,7 @@ async def update_github_content(
     )
 
 
-async def fetch_issues_for_similarity_check(conn: Connection) -> list[dict[str, Any]]:
+async def fetch_issues_for_similarity_check(conn: Connection[Any]) -> list[dict[str, Any]]:
     """Fetch GitHub issues for similarity check."""
     return await conn.fetch(
         """
@@ -89,7 +89,7 @@ async def fetch_issues_for_similarity_check(conn: Connection) -> list[dict[str, 
     )
 
 
-async def find_similar_issues(conn: Connection, id: int, project: GithubContentProject) -> list[dict[str, Any]]:
+async def find_similar_issues(conn: Connection[Any], id: int, project: GithubContentProject) -> list[dict[str, Any]]:
     """Find similar GitHub issues by vector similarity."""
     return await conn.fetch(
         """
@@ -108,7 +108,7 @@ async def find_similar_issues(conn: Connection, id: int, project: GithubContentP
     )
 
 
-async def update_similar_issues(conn: Connection, id: int, similar_issues_obj: list[dict[str, Any]]) -> None:
+async def update_similar_issues(conn: Connection[Any], id: int, similar_issues_obj: list[dict[str, Any]]) -> None:
     await conn.execute(
         """
         UPDATE github_contents SET similar_issues=$1 WHERE id=$2
