@@ -2,7 +2,7 @@ import asyncio
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
-from typing import Annotated, Any, Self
+from typing import Annotated, Self
 from urllib.parse import urlparse
 
 import asyncpg
@@ -36,7 +36,7 @@ class _Database:
             await asyncio.wait_for(pool.close(), timeout=2.0)
 
     @asynccontextmanager
-    async def acquire(self) -> AsyncIterator[Connection[Any]]:
+    async def acquire(self) -> AsyncIterator[Connection]:
         con = await self._pool.acquire()
         try:
             yield con
@@ -44,7 +44,7 @@ class _Database:
             await self._pool.release(con)
 
     @asynccontextmanager
-    async def acquire_trans(self) -> AsyncIterator[Connection[Any]]:
+    async def acquire_trans(self) -> AsyncIterator[Connection]:
         async with self._pool.acquire() as conn:
             async with conn.transaction():
                 yield conn
@@ -80,7 +80,7 @@ async def _prepare_db(dsn: str, create_database: bool) -> None:
             await conn.close()
 
 
-async def _create_schema(conn: Connection[Any]) -> None:
+async def _create_schema(conn: Connection) -> None:
     await conn.execute("""
 CREATE TABLE IF NOT EXISTS chats (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

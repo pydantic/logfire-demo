@@ -5,7 +5,7 @@ from asyncpg import Connection
 
 
 async def create_slack_message(
-    conn: Connection[Any],
+    conn: Connection,
     channel: str,
     author: str,
     message_id: str,
@@ -33,7 +33,7 @@ async def create_slack_message(
     )
 
 
-async def get_root_slack_messages(conn: Connection[Any], limit: int = 10) -> list[dict[str, Any]]:
+async def get_root_slack_messages(conn: Connection, limit: int = 10) -> list[dict[str, Any]]:
     """Fetch the root slack message from the database."""
     return await conn.fetch(
         """
@@ -52,7 +52,7 @@ async def get_root_slack_messages(conn: Connection[Any], limit: int = 10) -> lis
     )
 
 
-async def get_slack_thread(conn: Connection[Any], message_id: int) -> list[dict[str, Any]]:
+async def get_slack_thread(conn: Connection, message_id: int) -> list[dict[str, Any]]:
     """Fetch a slack thread from the database."""
     return await conn.fetch(
         """
