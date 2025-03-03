@@ -24,7 +24,7 @@ def _get_openai_client(request: Request) -> AsyncOpenAI:
 AsyncOpenAIClientDep = Annotated[AsyncOpenAI, Depends(_get_openai_client)]
 
 
-async def generate_github_content_embedding(openai_client: AsyncOpenAI, text: str) -> list[list[float]]:
+async def generate_github_content_embedding(openai_client: AsyncOpenAI, text: str) -> list[float]:
     """Generate an embedding for GitHub content."""
     truncated_text = truncate_text_to_token_limit(text)
     return await generate_embedding(openai_client, truncated_text)
@@ -38,7 +38,7 @@ def extract_data(issue: dict[str, Any]) -> tuple[int, str, str, datetime]:
     if title:
         text = f'{title}\n\n{text}'
     external_reference = issue.get('html_url')
-    event_ts = datetime.fromisoformat(issue.get('created_at').replace('Z', '+00:00'))
+    event_ts = datetime.fromisoformat(issue['created_at'].replace('Z', '+00:00'))
     return issue_id, text, external_reference, event_ts
 
 
