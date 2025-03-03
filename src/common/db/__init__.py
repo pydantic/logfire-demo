@@ -2,7 +2,7 @@ import asyncio
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
-from typing import Annotated, Self
+from typing import Annotated, Any, Self
 from urllib.parse import urlparse
 
 import asyncpg
@@ -19,7 +19,7 @@ class _Database:
     Wrapper for asyncpg with some utilities and usable as a fastapi dependency.
     """
 
-    _pool: asyncpg.Pool
+    _pool: asyncpg.Pool[Any]
 
     @classmethod
     @asynccontextmanager
@@ -28,13 +28,15 @@ class _Database:
             with logfire.span('prepare DB'):
                 await _prepare_db(dsn, create_database)
         pool = await asyncpg.create_pool(dsn)
+        if not pool:
+            raise ValueError('Failed to create pool')
         try:
             yield cls(_pool=pool)
         finally:
             await asyncio.wait_for(pool.close(), timeout=2.0)
 
     @asynccontextmanager
-    async def acquire(self) -> AsyncIterator[Connection]:
+    async def acquire(self) -> AsyncIterator[Connection[Any]]:
         con = await self._pool.acquire()
         try:
             yield con
@@ -42,7 +44,7 @@ class _Database:
             await self._pool.release(con)
 
     @asynccontextmanager
-    async def acquire_trans(self) -> AsyncIterator[Connection]:
+    async def acquire_trans(self) -> AsyncIterator[Connection[Any]]:
         async with self._pool.acquire() as conn:
             async with conn.transaction():
                 yield conn
