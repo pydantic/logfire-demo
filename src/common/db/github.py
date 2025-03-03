@@ -12,11 +12,11 @@ async def create_github_content(
     conn: Connection[Any],
     project: GithubContentProject,
     source: GithubContentSource,
-    content_id: str,
+    content_id: int,
     external_reference: str,
     text: str,
     event_ts: datetime,
-    embedding: list[list[float]],
+    embedding: list[float],
 ) -> None:
     """Save GitHub content to the database."""
     embedding_str = '[' + ','.join(map(str, embedding)) + ']'
@@ -58,7 +58,7 @@ async def update_github_content(
     source: GithubContentSource,
     content_id: int,
     text: str,
-    embedding: list[list[float]],
+    embedding: list[float],
 ) -> None:
     """Update GitHub content in the database."""
     embedding_str = '[' + ','.join(map(str, embedding)) + ']'

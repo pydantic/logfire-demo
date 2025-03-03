@@ -19,7 +19,7 @@ class _Database:
     Wrapper for asyncpg with some utilities and usable as a fastapi dependency.
     """
 
-    _pool: asyncpg.Pool[Any]
+    _pool: asyncpg.Pool
 
     @classmethod
     @asynccontextmanager
@@ -80,7 +80,7 @@ async def _prepare_db(dsn: str, create_database: bool) -> None:
             await conn.close()
 
 
-async def _create_schema(conn: Connection) -> None:
+async def _create_schema(conn: Connection[Any]) -> None:
     await conn.execute("""
 CREATE TABLE IF NOT EXISTS chats (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

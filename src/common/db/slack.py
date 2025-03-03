@@ -13,7 +13,7 @@ async def create_slack_message(
     parent_event_ts: str | None,
     text: str,
     ts: datetime,
-    embedding: list[list[float]],
+    embedding: list[float],
 ) -> None:
     """Create a new slack message in the database"""
     embedding_str = '[' + ','.join(map(str, embedding)) + ']'

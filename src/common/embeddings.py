@@ -1,6 +1,6 @@
 import hashlib
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 
 import logfire
 import tiktoken
@@ -40,13 +40,13 @@ def hash_text(text: str) -> str:
 EmbeddingsSource = Literal['slack_message', 'github_issue', 'pydantic_docs', 'pydantic_ai_docs', 'logfire_docs']
 
 
-async def get_stored_embeddings_hash_by_source(conn: Connection, source: EmbeddingsSource) -> list[str]:
+async def get_stored_embeddings_hash_by_source(conn: Connection[Any], source: EmbeddingsSource) -> list[str]:
     hashes = await conn.fetch('SELECT hash FROM embeddings WHERE source=$1', source)
-    return {hash[0] for hash in hashes}
+    return [hash[0] for hash in hashes]
 
 
 async def create_embeddings(
-    conn: Connection,
+    conn: Connection[Any],
     source: EmbeddingsSource,
     text: str,
     text_hash: str,
@@ -74,5 +74,5 @@ async def create_embeddings(
     )
 
 
-async def delete_embeddings_by_hash(conn: Connection, hashes: set[str], source: EmbeddingsSource) -> None:
+async def delete_embeddings_by_hash(conn: Connection[Any], hashes: set[str], source: EmbeddingsSource) -> None:
     await conn.execute('DELETE FROM embeddings WHERE hash = ANY($1) AND source=$2', hashes, source)
