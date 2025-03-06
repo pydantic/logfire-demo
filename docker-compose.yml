@@ -12,6 +12,7 @@ services:
         # forward the openapi key from the host environment
         OPENAI_API_KEY: $OPENAI_API_KEY
         LOGFIRE_TOKEN: $LOGFIRE_TOKEN
+        LOGFIRE_BASE_URL: $LOGFIRE_BASE_URL
         GITHUB_WEBHOOK_SECRET: $GITHUB_WEBHOOK_SECRET
         SLACK_SIGNING_SECRET: $SLACK_SIGNING_SECRET
         SLACK_CHANNEL_IDS: ${SLACK_CHANNEL_IDS:-[]}
@@ -27,6 +28,7 @@ services:
     environment:
         SERVICE: tiling
         LOGFIRE_TOKEN: $LOGFIRE_TOKEN
+        LOGFIRE_BASE_URL: $LOGFIRE_BASE_URL
     healthcheck:
       test: python -c "import urllib.request as r; assert r.urlopen('http://localhost:8000/health').status == 200"
 
@@ -37,9 +39,11 @@ services:
         SERVICE: worker
         PG_DSN: postgres://postgres:postgres@postgres/logfire_demo
         REDIS_DSN: redis://redis:6379/0
+        OPENAI_API_KEY: $OPENAI_API_KEY
         LOGFIRE_TOKEN: $LOGFIRE_TOKEN
-        GITHUB_APP_ID: $GITHUB_APP_ID
-        GITHUB_APP_INSTALLATION_ID: $GITHUB_APP_INSTALLATION_ID
+        LOGFIRE_BASE_URL: $LOGFIRE_BASE_URL
+        GITHUB_APP_ID: ${GITHUB_APP_ID:-0}
+        GITHUB_APP_INSTALLATION_ID: ${GITHUB_APP_INSTALLATION_ID:-0}
         GITHUB_APP_PRIVATE_KEY: $GITHUB_APP_PRIVATE_KEY
         VECTOR_DISTANCE_THRESHOLD: 0.4
         AI_SIMILARITY_THRESHOLD: 85

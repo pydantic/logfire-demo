@@ -17,8 +17,7 @@ from .settings import settings
 
 
 async def startup(ctx):
-    openai_http_client = AsyncClient()
-    openai_client = AsyncOpenAI(http_client=openai_http_client)
+    openai_client = AsyncOpenAI()
 
     ai_agent = Agent(
         'openai:gpt-4o',
