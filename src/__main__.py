@@ -3,6 +3,7 @@ import os
 import sys
 
 import logfire
+from pydantic_ai import Agent
 
 service = sys.argv[1] if len(sys.argv) == 2 else os.getenv('SERVICE')
 services = 'webui', 'tiling', 'worker'
@@ -44,7 +45,7 @@ elif service in services:
     )
     logfire.instrument_system_metrics()
     logfire.instrument_asyncpg()
-    logfire.instrument_openai()
+    Agent.instrument_all()
 
     module = importlib.import_module(f'.{service}', package='src')
     module.run()
