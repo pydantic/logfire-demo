@@ -42,6 +42,7 @@ elif service in services:
             revision='main',
         ),
         scrubbing=logfire.ScrubbingOptions(callback=scrubbing_callback),
+        distributed_tracing=True,
     )
     logfire.instrument_system_metrics()
     logfire.instrument_asyncpg()
