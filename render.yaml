@@ -17,7 +17,7 @@ services:
         sync: false
       - key: SLACK_SIGNING_SECRET
         sync: false
-      - key: SLACK_CHANNEL_IDS
+      - key: SLACK_CHANNEL
         sync: false
       - key: CREATE_DATABASE
         value: "false"

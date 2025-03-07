@@ -15,7 +15,7 @@ services:
         LOGFIRE_BASE_URL: $LOGFIRE_BASE_URL
         GITHUB_WEBHOOK_SECRET: $GITHUB_WEBHOOK_SECRET
         SLACK_SIGNING_SECRET: $SLACK_SIGNING_SECRET
-        SLACK_CHANNEL_IDS: ${SLACK_CHANNEL_IDS:-[]}
+        SLACK_CHANNEL: ${SLACK_CHANNEL:-{}}
     healthcheck:
       test: python -c "import urllib.request as r; assert r.urlopen('http://localhost:8000/health').status == 200"
     depends_on:
