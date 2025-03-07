@@ -40,9 +40,9 @@ def hash_text(text: str) -> str:
 EmbeddingsSource = Literal['slack_message', 'github_issue', 'pydantic_docs', 'pydantic_ai_docs', 'logfire_docs']
 
 
-async def get_stored_embeddings_hash_by_source(conn: Connection, source: EmbeddingsSource) -> list[str]:
+async def get_stored_embeddings_hash_by_source(conn: Connection, source: EmbeddingsSource) -> set[str]:
     hashes = await conn.fetch('SELECT hash FROM embeddings WHERE source=$1', source)
-    return [hash[0] for hash in hashes]
+    return {record['hash'] for record in hashes}
 
 
 async def create_embeddings(
