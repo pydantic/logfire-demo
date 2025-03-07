@@ -9,10 +9,10 @@ from .shared import demo_page
 router = APIRouter()
 
 
-@router.get('', response_model=FastUI, response_model_exclude_none=True)
-async def read_messages(request: Request, db: Database):
+@router.get('/{channel_id}', response_model=FastUI, response_model_exclude_none=True)
+async def read_messages(request: Request, db: Database, channel_id: str):
     async with db.acquire() as conn:
-        messages = await get_root_slack_messages(conn)
+        messages = await get_root_slack_messages(conn, channel_id)
 
         text = ''
         for msg in messages:

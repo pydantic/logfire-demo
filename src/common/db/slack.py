@@ -33,7 +33,7 @@ async def create_slack_message(
     )
 
 
-async def get_root_slack_messages(conn: Connection, limit: int = 10) -> list[dict[str, Any]]:
+async def get_root_slack_messages(conn: Connection, channel_id: str, limit: int = 10) -> list[dict[str, Any]]:
     """Fetch the root slack message from the database."""
     return await conn.fetch(
         """
@@ -41,13 +41,14 @@ async def get_root_slack_messages(conn: Connection, limit: int = 10) -> list[dic
             SELECT s.id, s.author, s.text, s.ts, count(r.id) as replies_count
             FROM slack_messages s
             LEFT JOIN slack_messages r ON r.parent_event_ts = s.event_ts OR r.event_ts = s.event_ts
-            WHERE s.parent_event_ts IS NULL
+            WHERE s.parent_event_ts IS NULL AND s.channel = $1
             GROUP BY s.author, s.id, s.text, s.ts, s.event_ts
             ORDER BY s.ts DESC
-            LIMIT $1
+            LIMIT $2
         )
         SELECT * FROM messages ORDER BY ts
         """,
+        channel_id,
         limit,
     )
 

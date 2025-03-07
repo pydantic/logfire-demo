@@ -7,6 +7,7 @@ from fastui import AnyComponent, FastUI
 from fastui import components as c
 from fastui.events import GoToEvent
 
+from .settings import settings
 from .shared import demo_page
 
 router = APIRouter()
@@ -20,6 +21,9 @@ This site demonstrates [Pydantic Logfire](https://docs.logfire.dev).
 
 You can use the sections below to see how different tasks are recorded by Logfire.
 """
+    slack_links = [
+        f'* [{channel_name}](/slack/{channel_id})' for channel_id, channel_name in settings.slack_channel.items()
+    ]
     return demo_page(
         c.Markdown(text=markdown),
         c.Div(
@@ -32,7 +36,7 @@ You can use the sections below to see how different tasks are recorded by Logfir
         c.Div(
             components=[
                 c.Heading(text='Slack Messages Archive', level=2),
-                c.Link(components=[c.Text(text='Logfire Slack')], on_click=GoToEvent(url='/slack')),
+                c.Markdown(text='\n'.join(slack_links)),
             ],
             class_name='border-top mt-3 pt-1',
         ),

@@ -8,7 +8,7 @@ class Settings(GeneralSettings):
     tiling_server: str = 'http://localhost:8001'
     github_webhook_secret: SecretStr = 'test-github-secret'
     slack_signing_secret: SecretStr = 'test-slack-signing-secret'
-    slack_channel_ids: list[str] = ['']
+    slack_channel: dict[str, str] = {}  # mapping between Slack channel IDs and names
 
 
 settings = Settings()  # type: ignore

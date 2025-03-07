@@ -159,8 +159,8 @@ async def slack_events(request: Request, db: Database, openai_client: AsyncOpenA
         logfire.info('Received Slack event: {event}', event=event)
 
         # Only process messages from allowed channels
-        if (channel := event.get('channel')) not in settings.slack_channel_ids:
-            logfire.error('Invalid Slack channel: {channel}', channel=channel)
+        if (channel := event.get('channel')) not in settings.slack_channel:
+            logfire.info('Invalid Slack channel: {channel}', channel=channel)
             return {'message': 'Invalid Slack channel'}
 
         if event.get('type') == 'message' and event.get('subtype') is None:
