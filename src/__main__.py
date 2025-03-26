@@ -36,6 +36,8 @@ elif service in services:
             return match.value
 
     logfire.configure(
+        advanced=logfire.AdvancedOptions(base_url='http://otel-collector:4318'),
+        token='does-not-matter',  #  as we send data to otel collector, token is here to prevent errors
         service_name=service,
         code_source=logfire.CodeSource(
             repository='https://github.com/pydantic/logfire-demo',
