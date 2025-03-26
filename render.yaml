@@ -71,6 +71,16 @@ services:
         sync: false
       - key: AI_SIMILARITY_THRESHOLD
         sync: false
+  - name: otel-collector
+    type: pserv  # Ensures it's not exposed to the internet
+    runtime: docker
+    dockerfilePath: ./otel-collector/Dockerfile
+    envVars:
+      - key: US_WRITE_TOKEN
+        sync: false
+      - key: EU_WRITE_TOKEN
+        sync: false
+    autoDeploy: true
   - type: redis
     name: arq-redis
     plan: starter
