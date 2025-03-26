@@ -1,0 +1,42 @@
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: "0.0.0.0:4318"
+
+exporters:
+  debug:
+  otlphttp/us:
+    endpoint: https://api-us.pydantic.info
+    compression: none
+    tls:
+      insecure: true
+    headers:
+      Authorization: "Bearer ${US_WRITE_TOKEN}"
+  otlphttp/eu:
+    endpoint: https://api-eu.pydantic.info
+    compression: none
+    tls:
+      insecure: true
+    headers:
+      Authorization: "Bearer ${EU_WRITE_TOKEN}"
+processors:
+  batch:
+    timeout: 1s
+    send_batch_size: 32768
+
+extensions:
+  health_check:
+    endpoint: "0.0.0.0:13133"
+
+service:
+  extensions: [health_check]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [debug, otlphttp/us, otlphttp/eu]
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [debug, otlphttp/us, otlphttp/eu]

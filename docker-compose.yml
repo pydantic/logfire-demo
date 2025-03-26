@@ -50,6 +50,20 @@ services:
     healthcheck:
       test: arq src.worker.WorkerSettings --check
 
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.101.0
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "4318:4318"
+      - "4317:4317"
+      # healthcheck port
+      - "13133:13133"
+    environment:
+      US_WRITE_TOKEN: $US_WRITE_TOKEN
+      EU_WRITE_TOKEN: $EU_WRITE_TOKEN
+
   postgres:
     image: ankane/pgvector:latest
     container_name: logfire-demo-postgres
