@@ -7,14 +7,14 @@ receivers:
 exporters:
   debug:
   otlphttp/us:
-    endpoint: https://api-us.pydantic.info
+    endpoint: https://api-us.pydantic.dev
     compression: none
     tls:
       insecure: true
     headers:
       Authorization: ${env:US_WRITE_TOKEN}
   otlphttp/eu:
-    endpoint: https://api-eu.pydantic.info
+    endpoint: https://api-eu.pydantic.dev
     compression: none
     tls:
       insecure: true
