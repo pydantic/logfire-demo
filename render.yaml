@@ -9,6 +9,8 @@ services:
         value: webui
       - key: LOGFIRE_TOKEN
         sync: false
+      - key: OTEL_EXPORTER_OTLP_ENDPOINT
+        sync: false
       - key: TILING_SERVER
         value: "https://tiling.onrender.com"
       - key: OPENAI_API_KEY
@@ -40,6 +42,8 @@ services:
         value: tiling
       - key: LOGFIRE_TOKEN
         sync: false
+      - key: OTEL_EXPORTER_OTLP_ENDPOINT
+        sync: false
   - type: worker
     name: arq-worker
     runtime: docker
@@ -49,6 +53,8 @@ services:
       - key: SERVICE
         value: worker
       - key: LOGFIRE_TOKEN
+        sync: false
+      - key: OTEL_EXPORTER_OTLP_ENDPOINT
         sync: false
       - key: OPENAI_API_KEY
         sync: false
