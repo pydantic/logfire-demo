@@ -94,4 +94,4 @@ services:
 
 databases:
   - name: postgres
-    plan: starter
+    plan: Basic-1gb
