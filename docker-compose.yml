@@ -10,7 +10,9 @@ services:
         REDIS_DSN: redis://redis:6379/0
         TILING_SERVER: "http://tiling:8000"
         # forward the openapi key from the host environment
+        OPENAI_BASE_URL: https://gateway.pydantic.dev/proxy/openai
         OPENAI_API_KEY: $OPENAI_API_KEY
+        PYDANTIC_AI_GATEWAY_API_KEY: $PYDANTIC_AI_GATEWAY_API_KEY
         LOGFIRE_TOKEN: $LOGFIRE_TOKEN
         LOGFIRE_BASE_URL: $LOGFIRE_BASE_URL
         GITHUB_WEBHOOK_SECRET: $GITHUB_WEBHOOK_SECRET
@@ -39,7 +41,9 @@ services:
         SERVICE: worker
         PG_DSN: postgres://postgres:postgres@postgres/logfire_demo
         REDIS_DSN: redis://redis:6379/0
+        OPENAI_BASE_URL: https://gateway.pydantic.dev/proxy/openai
         OPENAI_API_KEY: $OPENAI_API_KEY
+        PYDANTIC_AI_GATEWAY_API_KEY: $PYDANTIC_AI_GATEWAY_API_KEY
         LOGFIRE_TOKEN: $LOGFIRE_TOKEN
         LOGFIRE_BASE_URL: $LOGFIRE_BASE_URL
         GITHUB_APP_ID: ${GITHUB_APP_ID:-0}
