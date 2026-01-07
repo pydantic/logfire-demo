@@ -24,7 +24,7 @@ class SimilarityResult(BaseModel):
 
 
 similar_issue_agent = Agent(
-    'openai:gpt-4o',
+    'gateway/openai:gpt-5',
     result_type=SimilarityResult,
     model_settings=ModelSettings(temprature=0.1),
     system_prompt=(

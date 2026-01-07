@@ -25,8 +25,8 @@ dependencies = [
     "uvicorn[standard]>=0.30.6",
 ]
 
-[tool.uv]
-dev-dependencies = [
+[dependency-groups]
+dev = [
     "asyncpg-stubs>=0.29.1",
     "devtools>=0.12.2",
     "ipython>=8.27.0",
