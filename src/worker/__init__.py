@@ -93,7 +93,7 @@ async def llm_query(ctx) -> None:
         question_index = int(time.time() // (5 * 60)) % len(QUESTIONS)  # Divide time into 5-minute intervals
         question = QUESTIONS[question_index]
         response = await ctx['ai_agent'].run(question)
-        logfire.info('Question: {question} Answer: {response}', question=question, response=response.data)
+        logfire.info('Question: {question} Answer: {response}', question=question, response=response.output)
 
 
 async def check_new_created_issues(ctx) -> None:
