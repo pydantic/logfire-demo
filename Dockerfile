@@ -26,7 +26,7 @@ COPY ./src /app/src
 ARG LOGFIRE_TOKEN
 ENV LOGFIRE_TOKEN=$LOGFIRE_TOKEN
 
-FROM python:3.12-alpine AS main
+FROM python:3.12-slim AS main
 
 COPY --from=build --chown=app:app /app /app
 WORKDIR /app
