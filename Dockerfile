@@ -1,9 +1,17 @@
-FROM python:3.12-alpine AS build
+FROM python:3.12-slim AS build
 
 WORKDIR /app
 
-# required for logfire[system-metrics] which in turn requires psutlils
-RUN apk add --no-cache gcc musl-dev linux-headers && rm -rf /var/cache/apk/*
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    python3-dev \
+    libssl-dev \
+    libffi-dev \
+    protobuf-compiler \
+    gcc \
+    musl-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN pip install uv
 
