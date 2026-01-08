@@ -211,8 +211,8 @@ async def suggest_similar_issues(
                         similarity_result = await similar_issue_agent.run(
                             _generate_query(issue['text'], similar_issue['text'])
                         )
-                        obj['ai_similarity'] = similarity_result.data.percentage
-                        if similarity_result.data.percentage > ai_similarity_threshold:
+                        obj['ai_similarity'] = similarity_result.output.percentage
+                        if similarity_result.output.percentage > ai_similarity_threshold:
                             obj['post_comment'] = True
                     else:
                         logfire.info(f'Skipping similar issue {similar_issue_link} due to distance {distance}')
