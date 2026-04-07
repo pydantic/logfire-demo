@@ -76,7 +76,7 @@ async def llm_ask(
     ]
 
 
-OPENAI_MODEL = 'gpt-4'
+OPENAI_MODEL = 'gpt-4o'
 
 
 @router.get('/ask/stream/{chat_id}')

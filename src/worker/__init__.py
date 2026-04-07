@@ -20,7 +20,7 @@ async def startup(ctx):
     openai_client = AsyncOpenAI()
 
     ai_agent = Agent(
-        'gateway/openai:gpt-5',
+        'openai:gpt-4o',
         system_prompt='Be concise, reply with maximum 50 tokens.',
     )
 

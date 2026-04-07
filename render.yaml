@@ -17,8 +17,6 @@ services:
         sync: false
       - key: OPENAI_API_KEY
         sync: false
-      - key: PYDANTIC_AI_GATEWAY_API_KEY
-        sync: false
       - key: GITHUB_WEBHOOK_SECRET
         sync: false
       - key: SLACK_SIGNING_SECRET
@@ -63,8 +61,6 @@ services:
       - key: OPENAI_BASE_URL
         sync: false
       - key: OPENAI_API_KEY
-        sync: false
-      - key: PYDANTIC_AI_GATEWAY_API_KEY
         sync: false
       - key: PG_DSN
         fromDatabase:
